@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#0D1117"
+    android:padding="16dp">
+
+    <!-- Header -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🤖 Matchai Agent"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="#58A6FF"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Status Bar -->
+    <TextView
+        android:id="@+id/tv_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="⏳ Checking..."
+        android:textSize="14sp"
+        android:textColor="#8B949E"
+        android:background="#161B22"
+        android:padding="12dp"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Control Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="12dp">
+
+        <Button
+            android:id="@+id/btn_start"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="▶ Start"
+            android:backgroundTint="#238636"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btn_check_shizuku"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="⚡ Shizuku"
+            android:backgroundTint="#1F6FEB"
+            android:layout_marginEnd="4dp" />
+
+        <Button
+            android:id="@+id/btn_accessibility"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="♿ Access"
+            android:backgroundTint="#6E40C9" />
+    </LinearLayout>
+
+    <!-- Log Label -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="📋 Agent Log:"
+        android:textColor="#8B949E"
+        android:textSize="12sp"
+        android:layout_marginBottom="4dp" />
+
+    <!-- Scrollable Log -->
+    <ScrollView
+        android:id="@+id/scroll_log"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#0D1117"
+        android:fillViewport="true">
+
+        <TextView
+            android:id="@+id/tv_log"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#C9D1D9"
+            android:textSize="11sp"
+            android:fontFamily="monospace"
+            android:padding="8dp"
+            android:text="" />
+    </ScrollView>
+</LinearLayout>

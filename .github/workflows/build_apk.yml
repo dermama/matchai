@@ -1,0 +1,94 @@
+name: 🤖 Build Matchai APK
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'android/**'
+      - '.github/workflows/**'
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'debug or release'
+        required: false
+        default: 'debug'
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────────────────────
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      # ── 2. Java ──────────────────────────────────────────────────────────────
+      - name: ☕ Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      # ── 3. Gradle Cache ──────────────────────────────────────────────────────
+      - name: 💾 Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('android/**/*.gradle*', 'android/**/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-gradle-
+
+      # ── 4. Permissions ───────────────────────────────────────────────────────
+      - name: 🔑 Grant Gradle permission
+        run: chmod +x android/gradlew
+
+      # ── 5. Build ─────────────────────────────────────────────────────────────
+      - name: 🔨 Build Debug APK
+        working-directory: ./android
+        env:
+          SERVER_URL: ${{ secrets.SERVER_URL }}
+          DEVICE_SECRET: ${{ secrets.DEVICE_SECRET }}
+        run: ./gradlew assembleDebug --stacktrace --no-daemon
+
+      # ── 6. Upload to GitHub ──────────────────────────────────────────────────
+      - name: 📤 Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: matchai-apk-${{ github.run_number }}
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+
+      # ── 7. Send APK to Telegram ──────────────────────────────────────────────
+      - name: 📱 Send APK to Telegram
+        if: success()
+        run: |
+          APK_PATH="android/app/build/outputs/apk/debug/app-debug.apk"
+          APK_SIZE=$(du -sh "$APK_PATH" | cut -f1)
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
+          CAPTION="✅ *Matchai APK Built Successfully!*
+          
+          🔢 Build: \`#${{ github.run_number }}\`
+          📦 Size: \`$APK_SIZE\`
+          🌿 Branch: \`${{ github.ref_name }}\`
+          💬 Commit: \`${COMMIT_MSG:0:50}\`
+          
+          _Install on your phone and connect to Shizuku!_"
+          
+          curl -s -F "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+               -F "document=@$APK_PATH" \
+               -F "caption=$CAPTION" \
+               -F "parse_mode=Markdown" \
+               "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument"
+
+      # ── 8. Notify on failure ─────────────────────────────────────────────────
+      - name: ❌ Notify failure on Telegram
+        if: failure()
+        run: |
+          curl -s -X POST \
+               -H "Content-Type: application/json" \
+               -d "{\"chat_id\":\"${{ secrets.TELEGRAM_CHAT_ID }}\",\"text\":\"❌ *Matchai Build FAILED!*\n🔢 Build #${{ github.run_number }}\n🌿 Branch: \`${{ github.ref_name }}\`\n\nCheck GitHub Actions for details.\",\"parse_mode\":\"Markdown\"}" \
+               "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage"

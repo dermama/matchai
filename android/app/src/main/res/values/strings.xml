@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Matchai Agent</string>
+    <string name="accessibility_description">Matchai needs Accessibility Service to read and interact with the screen as an AI agent.</string>
+</resources>
