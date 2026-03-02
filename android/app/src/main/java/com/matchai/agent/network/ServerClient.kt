@@ -78,6 +78,7 @@ class ServerClient(
         taskId: String,
         success: Boolean,
         screenshotB64: String = "",
+        structuredDataJson: String = "",  // Primary: Shizuku structured data from collect_state
         installedApps: List<String> = emptyList(),
         deviceInfo: Map<String, String> = emptyMap(),
         output: String = "",
@@ -88,6 +89,15 @@ class ServerClient(
             put("task_id", taskId)
             put("success", success)
             put("screenshot_b64", screenshotB64)
+            // Parse and embed structured data if available
+            if (structuredDataJson.isNotEmpty()) {
+                try {
+                    val parsedData = Json.parseToJsonElement(structuredDataJson)
+                    put("structured_data", parsedData)
+                } catch (e: Exception) {
+                    put("structured_data", buildJsonObject { put("raw", structuredDataJson.take(500)) })
+                }
+            }
             put("installed_apps", buildJsonArray { installedApps.forEach { add(it) } })
             put("device_info", buildJsonObject { deviceInfo.forEach { (k, v) -> put(k, v) } })
             put("output", output)
@@ -106,6 +116,7 @@ class ServerClient(
             Log.e(TAG, "Result send failed: ${e.message}")
         }
     }
+
 
     suspend fun registerDevice(
         deviceId: String,

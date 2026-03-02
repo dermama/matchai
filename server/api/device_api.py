@@ -31,11 +31,15 @@ class DeviceResult(BaseModel):
     task_id: str
     success: bool
     screenshot_b64: str = ""
+    # Structured data from ShizukuDataCollector (primary data source)
+    structured_data: dict = {}   # foreground_app, screen_elements, screen_text, etc.
     ui_elements: list = []
     installed_apps: list = []
     device_info: dict = {}
     output: str = ""
     error: str = ""
+    timestamp: int = 0
+
 
 
 class DeviceRegister(BaseModel):
