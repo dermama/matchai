@@ -18,7 +18,7 @@ logger = logging.getLogger("matchai.gemini")
 # ─── Configure Gemini ─────────────────────────────────────────────────────────
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
-GEMINI_MODEL = "gemini-2.5-flash-preview-05-20"
+GEMINI_MODEL = "gemini-3-flash-preview"
 
 SYSTEM_PROMPT = """أنت Matchai — وكيل ذكاء اصطناعي متخصص في التحكم الكامل بهواتف الأندرويد.
 
