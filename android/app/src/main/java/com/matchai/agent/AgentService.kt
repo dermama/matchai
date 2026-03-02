@@ -12,6 +12,7 @@ import com.matchai.agent.control.*
 import com.matchai.agent.network.ServerClient
 import com.matchai.agent.shizuku.ShizukuManager
 import com.matchai.agent.shizuku.ShizukuDataCollector
+import com.matchai.agent.shizuku.AppInspector
 import com.matchai.agent.shizuku.UIElement
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.*
@@ -41,7 +42,10 @@ class AgentService : Service() {
     private lateinit var textController: TextController
     private lateinit var appController: AppController
     private lateinit var systemController: SystemController
-    private lateinit var dataCollector: ShizukuDataCollector  // Primary data source
+    private lateinit var dataCollector: ShizukuDataCollector   // Primary: structured Shizuku data
+    private lateinit var fileController: FileController        // File operations
+    private lateinit var gestureController: GestureController  // Complex gestures + macros
+    private lateinit var appInspector: AppInspector            // Deep app inspection
 
     private var isRunning = false
 
@@ -52,16 +56,19 @@ class AgentService : Service() {
         createNotificationChannel()
         startForeground(NOTIF_ID, buildNotification("🔄 Connecting..."))
 
-        shizukuManager = ShizukuManager(this)
-        serverClient = ServerClient(BuildConfig.SERVER_URL, BuildConfig.DEVICE_SECRET)
-        screenController = ScreenController(shizukuManager, this)
-        touchController = TouchController(shizukuManager)
-        textController = TextController(shizukuManager, this)
-        appController = AppController(shizukuManager, this)
-        systemController = SystemController(shizukuManager)
-        dataCollector   = ShizukuDataCollector(shizukuManager, this)
+        shizukuManager    = ShizukuManager(this)
+        serverClient      = ServerClient(BuildConfig.SERVER_URL, BuildConfig.DEVICE_SECRET)
+        screenController  = ScreenController(shizukuManager, this)
+        touchController   = TouchController(shizukuManager)
+        textController    = TextController(shizukuManager, this)
+        appController     = AppController(shizukuManager, this)
+        systemController  = SystemController(shizukuManager)
+        dataCollector     = ShizukuDataCollector(shizukuManager, this)
+        fileController    = FileController(shizukuManager)
+        gestureController = GestureController(shizukuManager)
+        appInspector      = AppInspector(shizukuManager)
 
-        Log.i(TAG, "AgentService created | Server: ${BuildConfig.SERVER_URL}")
+        Log.i(TAG, "AgentService v2 created | Server: ${BuildConfig.SERVER_URL}")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -233,6 +240,78 @@ class AgentService : Service() {
                 "shell_command" -> shizukuManager.executeShellCommand(
                     command.params["command"]!!.jsonPrimitive.content
                 )
+
+                // ── File Operations (via FileController) ──
+                "list_files" -> fileController.listDirectory(
+                    command.params["path"]?.jsonPrimitive?.content ?: "/sdcard/"
+                )
+                "list_downloads" -> fileController.listDownloads()
+                "read_file" -> fileController.readTextFile(
+                    command.params["path"]!!.jsonPrimitive.content
+                )
+                "write_file" -> fileController.writeTextFile(
+                    command.params["path"]!!.jsonPrimitive.content,
+                    command.params["content"]!!.jsonPrimitive.content
+                )
+                "delete_file" -> fileController.deleteFile(
+                    command.params["path"]!!.jsonPrimitive.content
+                )
+                "copy_file" -> fileController.copyFile(
+                    command.params["src"]!!.jsonPrimitive.content,
+                    command.params["dst"]!!.jsonPrimitive.content
+                )
+                "get_latest_photo" -> fileController.getLatestPhoto()
+                "share_file" -> fileController.shareFileWithApp(
+                    command.params["path"]!!.jsonPrimitive.content,
+                    command.params["package"]!!.jsonPrimitive.content
+                )
+
+                // ── Gesture Macros ──
+                "swipe_left"  -> gestureController.swipeLeft()
+                "swipe_right" -> gestureController.swipeRight()
+                "fling_up"    -> gestureController.flingUp()
+                "fling_down"  -> gestureController.flingDown()
+                "pinch_zoom_in" -> gestureController.pinchZoomIn(
+                    command.params["x"]?.jsonPrimitive?.int ?: 540,
+                    command.params["y"]?.jsonPrimitive?.int ?: 960,
+                )
+                "pinch_zoom_out" -> gestureController.pinchZoomOut(
+                    command.params["x"]?.jsonPrimitive?.int ?: 540,
+                    command.params["y"]?.jsonPrimitive?.int ?: 960,
+                )
+                "pull_notification_shade" -> gestureController.swipeDownFromTop()
+                "swipe_up_home"           -> gestureController.swipeUpFromBottom()
+                "unlock_screen"           -> gestureController.unlockScreen()
+
+                // ── App Inspector (Deep Inspection) ──
+                "app_inspect" -> {
+                    val pkg = command.params["package_name"]!!.jsonPrimitive.content
+                    val report = appInspector.generateAppReport(pkg)
+                    CommandResult(success = true, output = report)
+                }
+                "app_permissions" -> {
+                    val pkg = command.params["package_name"]!!.jsonPrimitive.content
+                    val perms = appInspector.getAppPermissions(pkg)
+                    CommandResult(success = true, output = perms.joinToString("\n"))
+                }
+                "app_version" -> {
+                    val pkg = command.params["package_name"]!!.jsonPrimitive.content
+                    val info = appInspector.getVersionInfo(pkg)
+                    CommandResult(success = true, output = info.toString())
+                }
+                "wait_app_idle" -> {
+                    val pkg = command.params["package_name"]!!.jsonPrimitive.content
+                    val ms  = command.params["timeout_ms"]?.jsonPrimitive?.int?.toLong() ?: 5000L
+                    val idle = appInspector.waitUntilIdle(pkg, timeoutMs = ms)
+                    CommandResult(success = idle, output = if (idle) "app is idle" else "timed out")
+                }
+                "wait_app_open" -> {
+                    val pkg = command.params["package_name"]!!.jsonPrimitive.content
+                    val ms  = command.params["timeout_ms"]?.jsonPrimitive?.int?.toLong() ?: 8000L
+                    val opened = appInspector.waitUntilAppInForeground(pkg, timeoutMs = ms)
+                    CommandResult(success = opened, output = if (opened) "$pkg is in foreground" else "timeout")
+                }
+
 
                 // ── Wait ──
                 "wait" -> {
