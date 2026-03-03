@@ -14,7 +14,7 @@ logger = logging.getLogger("matchai.webhook")
 
 router = APIRouter()
 
-TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "missing_chat_id")
 
 # Special command shortcuts
 COMMAND_SHORTCUTS = {

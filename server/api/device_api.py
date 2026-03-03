@@ -97,7 +97,7 @@ async def register_device(
         f"Screen: {info.screen_width}x{info.screen_height}"
     )
     sm = get_state_machine()
-    chat_id = os.environ["TELEGRAM_CHAT_ID"]
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "missing_chat_id")
     await sm.telegram.send_message(
         chat_id,
         f"📱 *الهاتف متصل!*\n"
