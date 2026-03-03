@@ -18,26 +18,26 @@ class GestureController(private val shizuku: ShizukuManager) {
     /** Pinch zoom in (spread fingers) centered at x,y */
     suspend fun pinchZoomIn(cx: Int, cy: Int, spread: Int = 300): CommandResult {
         Log.d(TAG, "pinchZoomIn at ($cx,$cy) spread=$spread")
-        // Simulate two-finger spread using two overlapping swipes
-        val result1 = shizuku.executeShellCommand(
-            "input swipe ${cx - spread/4} ${cy} ${cx - spread} ${cy} 400 &"
+        // Execute first finger movement, brief delay, then second
+        shizuku.executeShellCommand(
+            "input swipe ${cx - spread/4} $cy ${cx - spread} $cy 400"
         )
-        val result2 = shizuku.executeShellCommand(
-            "input swipe ${cx + spread/4} ${cy} ${cx + spread} ${cy} 400"
+        delay(50)
+        return shizuku.executeShellCommand(
+            "input swipe ${cx + spread/4} $cy ${cx + spread} $cy 400"
         )
-        return result2
     }
 
     /** Pinch zoom out (bring fingers together) */
     suspend fun pinchZoomOut(cx: Int, cy: Int, spread: Int = 300): CommandResult {
         Log.d(TAG, "pinchZoomOut at ($cx,$cy)")
-        val result1 = shizuku.executeShellCommand(
-            "input swipe ${cx - spread} ${cy} ${cx - spread/4} ${cy} 400 &"
+        shizuku.executeShellCommand(
+            "input swipe ${cx - spread} $cy ${cx - spread/4} $cy 400"
         )
-        val result2 = shizuku.executeShellCommand(
-            "input swipe ${cx + spread} ${cy} ${cx + spread/4} ${cy} 400"
+        delay(50)
+        return shizuku.executeShellCommand(
+            "input swipe ${cx + spread} $cy ${cx + spread/4} $cy 400"
         )
-        return result2
     }
 
     // ─── Multi-direction Swipes ────────────────────────────────────────────────

@@ -2,6 +2,7 @@ package com.matchai.agent.shizuku
 
 import android.util.Log
 import com.matchai.agent.CommandResult
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -233,7 +234,7 @@ class AppInspector(private val shizuku: ShizukuManager) {
     suspend fun generateAppReport(packageName: String): String {
         val versionInfo = getVersionInfo(packageName)
         val isRunningNow = isRunning(packageName)
-        val memUse = if (isRunningNow) getMemoryUsage(packageName).output.take(200) else "not running"
+        val memUse = if (isRunningNow) getMemoryUsage(packageName).output.orEmpty().take(200) else "not running"
         val permissions = getAppPermissions(packageName).take(10)
 
         return buildString {

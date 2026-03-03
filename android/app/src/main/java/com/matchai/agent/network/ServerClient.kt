@@ -42,16 +42,20 @@ class ServerClient(
     // ─── Data classes ─────────────────────────────────────────────────────────
 
     @Serializable data class PollResponse(
+        @kotlinx.serialization.SerialName("has_command")
         val has_command: Boolean,
         val command: Command?,
     )
 
     @Serializable data class Command(
-        val command_id: String,
-        val task_id: String,
+        @kotlinx.serialization.SerialName("command_id")
+        val commandId: String,
+        @kotlinx.serialization.SerialName("task_id")
+        val taskId: String,
         val action: String,
         val params: JsonObject = JsonObject(emptyMap()),
-        val step_id: JsonElement = JsonNull,
+        @kotlinx.serialization.SerialName("step_id")
+        val stepId: JsonElement = JsonNull,
     )
 
     // ─── API Methods ──────────────────────────────────────────────────────────

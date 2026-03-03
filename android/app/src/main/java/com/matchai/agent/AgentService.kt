@@ -99,7 +99,7 @@ class AgentService : Service() {
         while (isRunning) {
             try {
                 val response = serverClient.pollForCommand()
-                if (response?.hasCommand == true) {
+                if (response?.has_command == true) {
                     val command = response.command!!
                     Log.i(TAG, "📥 Received command: ${command.action} [${command.commandId}]")
                     updateNotification("⚡ Executing: ${command.action}")
@@ -329,16 +329,15 @@ class AgentService : Service() {
         // Send result back to server
         try {
             serverClient.sendResult(
-                commandId         = command.commandId,
-                taskId            = command.taskId,
-                success           = result.success,
-                screenshotB64     = result.screenshotB64 ?: "",
-                // Primary: structured Shizuku data (from collect_state)
+                commandId          = command.commandId,
+                taskId             = command.taskId,
+                success            = result.success,
+                screenshotB64      = result.screenshotB64 ?: "",
                 structuredDataJson = if (command.action == "collect_state") result.output ?: "" else "",
-                installedApps     = result.installedApps,
-                deviceInfo        = buildDeviceInfo(),
-                output            = if (command.action != "collect_state") result.output ?: "" else "",
-                error             = result.error ?: "",
+                installedApps      = result.installedApps,
+                deviceInfo         = buildDeviceInfo(),
+                output             = if (command.action != "collect_state") result.output ?: "" else "",
+                error              = result.error ?: "",
             )
         } catch (e: Exception) {
             Log.e(TAG, "Failed to send result: ${e.message}")
