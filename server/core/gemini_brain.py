@@ -16,7 +16,8 @@ import google.generativeai as genai
 logger = logging.getLogger("matchai.gemini")
 
 # ─── Configure Gemini ─────────────────────────────────────────────────────────
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "missing_key")
+genai.configure(api_key=GEMINI_API_KEY)
 
 GEMINI_MODEL = "gemini-3-flash-preview"
 

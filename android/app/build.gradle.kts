@@ -66,8 +66,8 @@ android {
 
 dependencies {
     // ── Shizuku ───────────────────────────────────────────────────────────────
-    implementation("dev.rikka.shizuku:api:13.1.5")
-    implementation("dev.rikka.shizuku:provider:13.1.5")
+    implementation("dev.rikka.shizuku:api:12.1.0")
+    implementation("dev.rikka.shizuku:provider:12.1.0")
 
     // ── Networking ────────────────────────────────────────────────────────────
     implementation("com.squareup.okhttp3:okhttp:4.12.0")

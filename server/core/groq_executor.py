@@ -12,7 +12,7 @@ from groq import Groq
 
 logger = logging.getLogger("matchai.groq")
 
-GROQ_API_KEY = os.environ["GROQ_API_KEY"]
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "missing_key")
 
 # Vision model for screenshot analysis
 VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
