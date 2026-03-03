@@ -1,0 +1,11 @@
+﻿2026-03-03T05:55:48.1563305Z ##[group]Run curl -s -X POST \
+2026-03-03T05:55:48.1563647Z [36;1mcurl -s -X POST \[0m
+2026-03-03T05:55:48.1563977Z [36;1m     -H "Content-Type: application/json" \[0m
+2026-03-03T05:55:48.1564692Z [36;1m     -d "{\"chat_id\":\"\",\"text\":\"❌ *Matchai Build FAILED!*\n🔢 Build #5\n🌿 Branch: \`main\`\n\nCheck GitHub Actions for details.\",\"parse_mode\":\"Markdown\"}" \[0m
+2026-03-03T05:55:48.1565392Z [36;1m     "https://api.telegram.org/bot/sendMessage"[0m
+2026-03-03T05:55:48.1592562Z shell: /usr/bin/bash -e {0}
+2026-03-03T05:55:48.1592846Z env:
+2026-03-03T05:55:48.1593184Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.18-8/x64
+2026-03-03T05:55:48.1593682Z   JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.18-8/x64
+2026-03-03T05:55:48.1594058Z ##[endgroup]
+2026-03-03T05:55:48.6537413Z {"ok":false,"error_code":404,"description":"Not Found"}

@@ -17,7 +17,7 @@ class SystemController(private val shizuku: ShizukuManager) {
 
     suspend fun toggleWifi(): CommandResult {
         val stateResult = shizuku.executeShellCommand("cmd wifi status")
-        val enabled = stateResult.output.contains("Wifi is enabled")
+        val enabled = stateResult.output?.contains("Wifi is enabled") == true
         return shizuku.executeShellCommand(
             if (enabled) "svc wifi disable" else "svc wifi enable"
         )
@@ -28,7 +28,7 @@ class SystemController(private val shizuku: ShizukuManager) {
 
     suspend fun toggleBluetooth(): CommandResult {
         val stateResult = shizuku.executeShellCommand("settings get global bluetooth_on")
-        val enabled = stateResult.output.trim() == "1"
+        val enabled = stateResult.output?.trim() == "1"
         return shizuku.executeShellCommand(
             if (enabled) "svc bluetooth disable" else "svc bluetooth enable"
         )
@@ -52,7 +52,7 @@ class SystemController(private val shizuku: ShizukuManager) {
 
     suspend fun getBatteryInfo(): CommandResult {
         val result = shizuku.executeShellCommand("dumpsys battery")
-        return result.copy(output = parseBattery(result.output))
+        return result.copy(output = parseBattery(result.output ?: ""))
     }
 
     suspend fun getStorageInfo(): CommandResult {

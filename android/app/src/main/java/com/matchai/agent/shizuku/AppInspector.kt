@@ -23,9 +23,8 @@ class AppInspector(private val shizuku: ShizukuManager) {
         val result = shizuku.executeShellCommand(
             "pm dump $packageName | grep -A1 'Activity of' | grep 'name=' | head -30"
         )
-        return result.output.lines()
-            .filter { it.contains("name=") }
-            .map { it.substringAfter("name=").trim() }
+        return result.output?.lines()?.filter { it.contains("name=") }
+            ?.map { it.substringAfter("name=").trim() } ?: emptyList()
     }
 
     /** Get all services of a package. */
@@ -33,7 +32,7 @@ class AppInspector(private val shizuku: ShizukuManager) {
         val result = shizuku.executeShellCommand(
             "pm dump $packageName | grep 'Service{' | head -20"
         )
-        return result.output.lines().filter { it.isNotBlank() }.map { it.trim() }
+        return result.output?.lines()?.filter { it.isNotBlank() }?.map { it.trim() } ?: emptyList()
     }
 
     /** Get declared permissions of a package. */
@@ -41,9 +40,8 @@ class AppInspector(private val shizuku: ShizukuManager) {
         val result = shizuku.executeShellCommand(
             "pm dump $packageName | grep 'permission:' | head -30"
         )
-        return result.output.lines()
-            .filter { it.contains("permission:") }
-            .map { it.substringAfter("permission:").trim() }
+        return result.output?.lines()?.filter { it.contains("permission:") }
+            ?.map { it.substringAfter("permission:").trim() } ?: emptyList()
     }
 
     /** Grant a permission to an app (requires Shizuku with ADB privileges). */
@@ -62,7 +60,7 @@ class AppInspector(private val shizuku: ShizukuManager) {
     /** Check if an app is currently installed. */
     suspend fun isInstalled(packageName: String): Boolean {
         val result = shizuku.executeShellCommand("pm path $packageName 2>&1")
-        return result.output.contains("package:")
+        return result.output?.contains("package:") == true
     }
 
     /** Check if an app is currently running in foreground or background. */
@@ -70,7 +68,7 @@ class AppInspector(private val shizuku: ShizukuManager) {
         val result = shizuku.executeShellCommand(
             "ps | grep $packageName | grep -v grep"
         )
-        return result.output.trim().isNotEmpty()
+        return result.output?.trim()?.isNotEmpty() == true
     }
 
     /** Get app version information. */
@@ -79,7 +77,7 @@ class AppInspector(private val shizuku: ShizukuManager) {
             "dumpsys package $packageName | grep -E 'versionName|versionCode|firstInstallTime|lastUpdateTime' | head -5"
         )
         val info = mutableMapOf<String, String>()
-        result.output.lines().forEach { line ->
+        result.output?.lines()?.forEach { line ->
             val trimmed = line.trim()
             when {
                 trimmed.startsWith("versionName=") -> info["version_name"] = trimmed.substringAfter("=")
@@ -94,7 +92,7 @@ class AppInspector(private val shizuku: ShizukuManager) {
     /** Get the APK path of an app. */
     suspend fun getApkPath(packageName: String): String {
         val result = shizuku.executeShellCommand("pm path $packageName")
-        return result.output.removePrefix("package:").trim()
+        return result.output?.removePrefix("package:")?.trim() ?: ""
     }
 
     /** Get memory usage of a running app. */
@@ -167,7 +165,7 @@ class AppInspector(private val shizuku: ShizukuManager) {
                 val fg = shizuku.executeShellCommand(
                     "dumpsys activity | grep 'mResumedActivity' | head -1"
                 )
-                if (fg.output.contains(packageName)) {
+                if (fg.output?.contains(packageName) == true) {
                     return@withTimeoutOrNull true
                 }
                 kotlinx.coroutines.delay(pollIntervalMs)
@@ -203,7 +201,7 @@ class AppInspector(private val shizuku: ShizukuManager) {
                 }
             } else {
                 stableStart = 0L
-                lastDump = dump
+                lastDump = dump ?: ""
             }
             kotlinx.coroutines.delay(300)
         }
@@ -222,7 +220,7 @@ class AppInspector(private val shizuku: ShizukuManager) {
             val fg = shizuku.executeShellCommand(
                 "dumpsys activity | grep 'mCurrentFocus' | head -1"
             )
-            if (fg.output.contains(activityName)) return@withContext true
+            if (fg.output?.contains(activityName) == true) return@withContext true
             kotlinx.coroutines.delay(300)
         }
         false

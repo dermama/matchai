@@ -1,0 +1,72 @@
+﻿2026-03-03T05:55:46.5530377Z ##[group]Run actions/checkout@v4
+2026-03-03T05:55:46.5531722Z with:
+2026-03-03T05:55:46.5532480Z   repository: dermama/matchai
+2026-03-03T05:55:46.5533647Z   token: ***
+2026-03-03T05:55:46.5534370Z   ssh-strict: true
+2026-03-03T05:55:46.5535116Z   ssh-user: git
+2026-03-03T05:55:46.5535871Z   persist-credentials: true
+2026-03-03T05:55:46.5536714Z   clean: true
+2026-03-03T05:55:46.5537485Z   sparse-checkout-cone-mode: true
+2026-03-03T05:55:46.5538402Z   fetch-depth: 1
+2026-03-03T05:55:46.5539156Z   fetch-tags: false
+2026-03-03T05:55:46.5540236Z   show-progress: true
+2026-03-03T05:55:46.5541014Z   lfs: false
+2026-03-03T05:55:46.5541723Z   submodules: false
+2026-03-03T05:55:46.5542492Z   set-safe-directory: true
+2026-03-03T05:55:46.5543626Z ##[endgroup]
+2026-03-03T05:55:46.6552743Z Syncing repository: dermama/matchai
+2026-03-03T05:55:46.6555246Z ##[group]Getting Git version info
+2026-03-03T05:55:46.6556429Z Working directory is '/home/runner/work/matchai/matchai'
+2026-03-03T05:55:46.6558123Z [command]/usr/bin/git version
+2026-03-03T05:55:46.6591639Z git version 2.53.0
+2026-03-03T05:55:46.6614527Z ##[endgroup]
+2026-03-03T05:55:46.6635369Z Temporarily overriding HOME='/home/runner/work/_temp/011c3769-2ae9-4786-84d7-4c391544d36d' before making global git config changes
+2026-03-03T05:55:46.6637966Z Adding repository directory to the temporary git global config as a safe directory
+2026-03-03T05:55:46.6641006Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/matchai/matchai
+2026-03-03T05:55:46.6673925Z Deleting the contents of '/home/runner/work/matchai/matchai'
+2026-03-03T05:55:46.6677333Z ##[group]Initializing the repository
+2026-03-03T05:55:46.6682606Z [command]/usr/bin/git init /home/runner/work/matchai/matchai
+2026-03-03T05:55:46.6748584Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-03-03T05:55:46.6751949Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-03-03T05:55:46.6754795Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-03-03T05:55:46.6757001Z hint: call:
+2026-03-03T05:55:46.6758345Z hint:
+2026-03-03T05:55:46.6759961Z hint: 	git config --global init.defaultBranch <name>
+2026-03-03T05:55:46.6761695Z hint:
+2026-03-03T05:55:46.6763298Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-03-03T05:55:46.6766144Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-03-03T05:55:46.6768409Z hint:
+2026-03-03T05:55:46.6769805Z hint: 	git branch -m <name>
+2026-03-03T05:55:46.6770869Z hint:
+2026-03-03T05:55:46.6771975Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-03-03T05:55:46.6773999Z Initialized empty Git repository in /home/runner/work/matchai/matchai/.git/
+2026-03-03T05:55:46.6778502Z [command]/usr/bin/git remote add origin https://github.com/dermama/matchai
+2026-03-03T05:55:46.6793195Z ##[endgroup]
+2026-03-03T05:55:46.6795295Z ##[group]Disabling automatic garbage collection
+2026-03-03T05:55:46.6797321Z [command]/usr/bin/git config --local gc.auto 0
+2026-03-03T05:55:46.6822293Z ##[endgroup]
+2026-03-03T05:55:46.6824420Z ##[group]Setting up auth
+2026-03-03T05:55:46.6830060Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-03-03T05:55:46.6857362Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-03-03T05:55:46.7135042Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-03-03T05:55:46.7165199Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-03-03T05:55:46.7355349Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-03-03T05:55:46.7388628Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-03-03T05:55:46.7563702Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-03-03T05:55:46.7593200Z ##[endgroup]
+2026-03-03T05:55:46.7595317Z ##[group]Fetching the repository
+2026-03-03T05:55:46.7603808Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +0d090d216c517c70c5ba0da05304f098d5b18790:refs/remotes/origin/main
+2026-03-03T05:55:47.1900949Z From https://github.com/dermama/matchai
+2026-03-03T05:55:47.1902349Z  * [new ref]         0d090d216c517c70c5ba0da05304f098d5b18790 -> origin/main
+2026-03-03T05:55:47.1927334Z ##[endgroup]
+2026-03-03T05:55:47.1928847Z ##[group]Determining the checkout info
+2026-03-03T05:55:47.1930399Z ##[endgroup]
+2026-03-03T05:55:47.1933909Z [command]/usr/bin/git sparse-checkout disable
+2026-03-03T05:55:47.1968064Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-03-03T05:55:47.1988732Z ##[group]Checking out the ref
+2026-03-03T05:55:47.1992292Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-03-03T05:55:47.2048225Z Switched to a new branch 'main'
+2026-03-03T05:55:47.2049498Z branch 'main' set up to track 'origin/main'.
+2026-03-03T05:55:47.2056293Z ##[endgroup]
+2026-03-03T05:55:47.2084251Z [command]/usr/bin/git log -1 --format=%H
+2026-03-03T05:55:47.2102584Z 0d090d216c517c70c5ba0da05304f098d5b18790

@@ -51,12 +51,14 @@ async def lifespan(app: FastAPI):
     else:
         logger.warning("⚠️ No RAILWAY_PUBLIC_DOMAIN set, webhook not registered automatically")
 
-    # Send startup notification
+    # Send startup notification in background to not block healthcheck
     handler = TelegramHandler()
-    await handler.send_message(
+    asyncio.create_task(handler.send_message(
         TELEGRAM_CHAT_ID,
         "🤖 *Matchai Agent Server Online!*\n\nأرسل أي أمر وسأنفذه على هاتفك فوراً.\n\nأمثلة:\n• `افتح واتساب`\n• `التقط لقطة شاشة`\n• `أرسل رسالة 'مرحبا' على واتساب لـ أحمد`",
-    )
+    ))
+    # Give uvicorn a moment to bind
+    await asyncio.sleep(0.1)
 
     yield
 

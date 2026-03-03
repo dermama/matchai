@@ -81,7 +81,7 @@ class ShizukuDataCollector(
 
         // Parse package name from output
         val packageName = parsePackageName(
-            topActivity.output + "\n" + focusedPkg.output + "\n" + activityStack.output
+            (topActivity.output ?: "") + "\n" + (focusedPkg.output ?: "") + "\n" + (activityStack.output ?: "")
         )
 
         // Get detailed app info if we have a package
@@ -93,11 +93,11 @@ class ShizukuDataCollector(
 
         return ForegroundAppInfo(
             packageName    = packageName,
-            activityName   = parseActivityName(activityStack.output),
+            activityName   = parseActivityName(activityStack.output ?: ""),
             appLabel       = appInfo.label,
             versionName    = appInfo.versionName,
             versionCode    = appInfo.versionCode,
-            rawDumpsys     = topActivity.output.take(500),
+            rawDumpsys     = (topActivity.output ?: "").take(500),
         )
     }
 
@@ -122,7 +122,7 @@ class ShizukuDataCollector(
             return UIHierarchyInfo(
                 available = false,
                 elements  = emptyList(),
-                rawText   = accDump.output,
+                rawText   = accDump.output ?: "",
             )
         }
 
@@ -135,13 +135,12 @@ class ShizukuDataCollector(
         shizuku.executeShellCommand("rm -f /sdcard/matchai_ui.xml")
 
         // Parse XML to extract UI elements
-        val elements = parseUIXml(xmlContent.output)
-
+        val elements = parseUIXml(xmlContent.output ?: "")
         Log.d(TAG, "UI Hierarchy: ${elements.size} elements found")
 
         return UIHierarchyInfo(
-            available = xmlContent.output.isNotEmpty(),
-            rawXml    = xmlContent.output.take(8000),  // Limit size
+            available = (xmlContent.output?.isNotEmpty() == true),
+            rawXml    = (xmlContent.output ?: "").take(8000),  // Limit size
             elements  = elements,
             rawText   = elements.joinToString("\n") {
                 "[${it.type}] '${it.text}' @ (${it.x},${it.y}) ${if (it.clickable) "[clickable]" else ""}"
@@ -160,9 +159,9 @@ class ShizukuDataCollector(
             "dumpsys window windows | grep -E 'Window #|mOwnerUid|Requested|mBaseLayer|isVisible' | head -80"
         )
 
-        return result.output.lines()
-            .filter { it.contains("Window #") }
-            .map { line ->
+        return result.output?.lines()
+            ?.filter { it.contains("Window #") }
+            ?.map { line ->
                 WindowInfo(
                     title = line.trim(),
                     visible = true,
@@ -183,7 +182,7 @@ class ShizukuDataCollector(
             "dumpsys activity recents | grep 'Recent #' | head -15"
         )
 
-        return (result.output + "\n" + altResult.output)
+        return (result.output ?: "" + "\n" + (altResult.output ?: ""))
             .lines()
             .filter { it.isNotBlank() }
             .take(10)
@@ -201,7 +200,7 @@ class ShizukuDataCollector(
             "dumpsys notification | grep -A3 'NotificationRecord{' | head -60"
         )
 
-        return result.output
+        return (result.output ?: "")
             .lines()
             .filter { it.contains("NotificationRecord") || it.contains("android.title") || it.contains("android.text") }
             .map { NotificationInfo(content = it.trim()) }
@@ -218,10 +217,10 @@ class ShizukuDataCollector(
         val result = shizuku.executeShellCommand(
             "dumpsys input_method | grep -E 'mInputShown|mCurrentInputMethodId|mCurId' | head -5"
         )
-        val isKeyboardShown = result.output.contains("mInputShown=true")
+        val isKeyboardShown = result.output?.contains("mInputShown=true") == true
         return InputMethodInfo(
             keyboardVisible = isKeyboardShown,
-            rawInfo = result.output.take(200),
+            rawInfo = (result.output ?: "").take(200),
         )
     }
 
@@ -231,7 +230,7 @@ class ShizukuDataCollector(
         val result = shizuku.executeShellCommand(
             "dumpsys window | grep mCurrentFocus | head -1"
         )
-        return result.output.trim()
+        return result.output?.trim() ?: ""
     }
 
     // ─── System Info ──────────────────────────────────────────────────────────
@@ -246,10 +245,10 @@ class ShizukuDataCollector(
         val wifi      = shizuku.executeShellCommand("dumpsys wifi | grep -E 'mNetworkInfo|mWifiInfo|SSID' | head -5")
 
         return SystemStateInfo(
-            battery = battery.output.trim(),
-            memory  = memory.output.trim(),
-            display = display.output.trim(),
-            wifi    = wifi.output.trim(),
+            battery = battery.output?.trim() ?: "",
+            memory  = memory.output?.trim() ?: "",
+            display = display.output?.trim() ?: "",
+            wifi    = wifi.output?.trim() ?: "",
         )
     }
 
@@ -274,9 +273,9 @@ class ShizukuDataCollector(
 
         return AppDetails(
             label          = extractPackageLabel(packageName),
-            versionName    = extractField(result.output, "versionName="),
-            versionCode    = extractField(result.output, "versionCode="),
-            activities     = activities.output.lines().take(10).map { it.trim() },
+            versionName    = extractField(result.output ?: "", "versionName="),
+            versionCode    = extractField(result.output ?: "", "versionCode="),
+            activities     = (activities.output ?: "").lines().take(10).map { it.trim() },
         )
     }
 
@@ -289,7 +288,7 @@ class ShizukuDataCollector(
             "pm list packages -s | grep -E 'whatsapp|telegram|youtube|chrome|camera|phone|settings|dialer|maps|gmail|photos'"
         )
 
-        val allOutput = result.output + "\n" + systemResult.output
+        val allOutput = (result.output ?: "") + "\n" + (systemResult.output ?: "")
 
         return allOutput.lines()
             .filter { it.startsWith("package:") }

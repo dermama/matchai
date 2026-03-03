@@ -75,12 +75,12 @@ class FileController(private val shizuku: ShizukuManager) {
 
     suspend fun fileExists(path: String): Boolean {
         val result = shizuku.executeShellCommand("[ -f '$path' ] && echo yes || echo no")
-        return result.output.trim() == "yes"
+        return result.output?.trim() == "yes"
     }
 
     suspend fun getFileSize(path: String): Long {
         val result = shizuku.executeShellCommand("stat -c %s '$path' 2>/dev/null || echo 0")
-        return result.output.trim().toLongOrNull() ?: 0L
+        return result.output?.trim()?.toLongOrNull() ?: 0L
     }
 
     // ─── Media Files ───────────────────────────────────────────────────────────
@@ -93,14 +93,14 @@ class FileController(private val shizuku: ShizukuManager) {
         val findResult = shizuku.executeShellCommand(
             "ls -t /sdcard/DCIM/Camera/*.jpg 2>/dev/null | head -1"
         )
-        val latestPath = findResult.output.trim()
+        val latestPath = findResult.output?.trim() ?: ""
         if (latestPath.isEmpty()) {
             return CommandResult(success = false, error = "No photos found")
         }
         return shizuku.executeShellCommand(
             "base64 '$latestPath' 2>&1"
         ).let { result ->
-            result.copy(output = "photo:$latestPath|${result.output}")
+           return result.copy(output = "photo:$latestPath|${result.output ?: ""}")
         }
     }
 
@@ -111,7 +111,7 @@ class FileController(private val shizuku: ShizukuManager) {
         val findResult = shizuku.executeShellCommand(
             "ls -t /sdcard/Pictures/Screenshots/*.png 2>/dev/null | head -1"
         )
-        val path = findResult.output.trim()
+        val path = findResult.output?.trim() ?: ""
         if (path.isEmpty()) {
             return CommandResult(success = false, error = "No screenshots found")
         }
@@ -143,7 +143,7 @@ class FileController(private val shizuku: ShizukuManager) {
         val result = shizuku.executeShellCommand(
             "pm path $packageName | head -1"
         )
-        return result.output.removePrefix("package:").trim()
+        return result.output?.removePrefix("package:")?.trim() ?: ""
     }
 
     suspend fun getAppSizeInfo(packageName: String): CommandResult {

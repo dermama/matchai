@@ -64,8 +64,8 @@ class ShizukuManager(private val context: Context) {
 
                 val process = Shizuku.newProcess(
                     arrayOf("sh", "-c", command),
-                    null,   // env
-                    null,   // cwd
+                    null as Array<String>?,
+                    null as String?
                 )
 
                 val output = process.inputStream.bufferedReader().readText()
