@@ -4,6 +4,8 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.Button
+import android.widget.EditText
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -20,6 +22,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var shizukuManager: ShizukuManager
     private lateinit var tvStatus: TextView
     private lateinit var tvLog: TextView
+    private lateinit var etServerUrl: EditText
+    private lateinit var etDeviceSecret: EditText
+    private lateinit var btnSaveConfig: Button
     private lateinit var scrollView: ScrollView
     private val logBuffer = StringBuilder()
 
@@ -30,8 +35,14 @@ class MainActivity : AppCompatActivity() {
         tvStatus = findViewById(R.id.tv_status)
         tvLog = findViewById(R.id.tv_log)
         scrollView = findViewById(R.id.scroll_log)
+        etServerUrl = findViewById(R.id.et_server_url)
+        etDeviceSecret = findViewById(R.id.et_device_secret)
+        btnSaveConfig = findViewById(R.id.btn_save_config)
 
         shizukuManager = ShizukuManager(this)
+
+        // Load existing config
+        loadConfig()
 
         // Start agent service
         startAgentService()
@@ -40,6 +51,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.btn_start).setOnClickListener { startAgentService() }
         findViewById<View>(R.id.btn_check_shizuku).setOnClickListener { checkShizuku() }
         findViewById<View>(R.id.btn_accessibility).setOnClickListener { openAccessibilitySettings() }
+        btnSaveConfig.setOnClickListener { saveConfig() }
 
         // Periodic status update
         lifecycleScope.launch {
@@ -90,6 +102,33 @@ class MainActivity : AppCompatActivity() {
         val shizukuOk = shizukuManager.isShizukuAvailable()
         val statusText = if (shizukuOk) "🟢 Shizuku Active" else "🔴 Shizuku Inactive"
         tvStatus.text = statusText
+    }
+
+    private fun loadConfig() {
+        val prefs = getSharedPreferences("matchai_prefs", MODE_PRIVATE)
+        val url = prefs.getString("server_url", BuildConfig.SERVER_URL)
+        val secret = prefs.getString("device_secret", BuildConfig.DEVICE_SECRET)
+        etServerUrl.setText(url)
+        etDeviceSecret.setText(secret)
+    }
+
+    private fun saveConfig() {
+        val url = etServerUrl.text.toString().trim()
+        val secret = etDeviceSecret.text.toString().trim()
+
+        if (url.isEmpty()) {
+            log("❌ Server URL cannot be empty")
+            return
+        }
+
+        getSharedPreferences("matchai_prefs", MODE_PRIVATE).edit().apply {
+            putString("server_url", url)
+            putString("device_secret", secret)
+            apply()
+        }
+
+        log("✅ Config saved. Restarting service...")
+        startAgentService()
     }
 
     fun log(message: String) {

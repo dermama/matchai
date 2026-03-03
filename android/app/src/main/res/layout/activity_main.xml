@@ -28,6 +28,58 @@
         android:padding="12dp"
         android:layout_marginBottom="12dp" />
 
+    <!-- Configuration Section -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#161B22"
+        android:padding="12dp"
+        android:layout_marginBottom="12dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⚙️ Configuration"
+            android:textColor="#58A6FF"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/et_server_url"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Server URL (https://...)"
+            android:textColor="#C9D1D9"
+            android:textColorHint="#484F58"
+            android:textSize="14sp"
+            android:inputType="textUri"
+            android:backgroundTint="#30363D"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/et_device_secret"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Device Secret"
+            android:textColor="#C9D1D9"
+            android:textColorHint="#484F58"
+            android:textSize="14sp"
+            android:inputType="textPassword"
+            android:backgroundTint="#30363D"
+            android:layout_marginBottom="12dp" />
+
+        <Button
+            android:id="@+id/btn_save_config"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="💾 Save &amp; Restart"
+            android:backgroundTint="#30363D"
+            android:textColor="#C9D1D9"
+            android:textSize="12sp" />
+    </LinearLayout>
+
     <!-- Control Buttons -->
     <LinearLayout
         android:layout_width="match_parent"

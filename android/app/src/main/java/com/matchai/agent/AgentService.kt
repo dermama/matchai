@@ -4,6 +4,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import android.util.Log
@@ -57,7 +58,13 @@ class AgentService : Service() {
         startForeground(NOTIF_ID, buildNotification("🔄 Connecting..."))
 
         shizukuManager    = ShizukuManager(this)
-        serverClient      = ServerClient(BuildConfig.SERVER_URL, BuildConfig.DEVICE_SECRET)
+        
+        // Load config from SharedPreferences
+        val prefs = getSharedPreferences("matchai_prefs", MODE_PRIVATE)
+        val serverUrl = prefs.getString("server_url", BuildConfig.SERVER_URL) ?: BuildConfig.SERVER_URL
+        val deviceSecret = prefs.getString("device_secret", BuildConfig.DEVICE_SECRET) ?: BuildConfig.DEVICE_SECRET
+        
+        serverClient      = ServerClient(serverUrl, deviceSecret)
         screenController  = ScreenController(shizukuManager, this)
         touchController   = TouchController(shizukuManager)
         textController    = TextController(shizukuManager, this)
