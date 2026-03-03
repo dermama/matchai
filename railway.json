@@ -2,11 +2,11 @@
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "builder": "NIXPACKS",
-    "watchPatterns": ["server/**"]
+    "rootDirectory": "server"
   },
   "deploy": {
-    "startCommand": "cd server && uvicorn main:app --host 0.0.0.0 --port $PORT",
-    "healthcheckPath": "/docs",
+    "startCommand": "uvicorn main:app --host 0.0.0.0 --port $PORT",
+    "healthcheckPath": "/health",
     "restartPolicyType": "ON_FAILURE"
   }
 }
