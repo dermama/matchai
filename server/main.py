@@ -35,19 +35,25 @@ async def lifespan(app: FastAPI):
     """Startup and shutdown logic."""
     logger.info("🚀 Matchai Server starting up...")
 
-    # Register Telegram webhook
+    # Register Telegram webhook in background to not block healthcheck
     if RAILWAY_PUBLIC_DOMAIN:
         webhook_url = f"https://{RAILWAY_PUBLIC_DOMAIN}/webhook/telegram"
-        async with httpx.AsyncClient() as client:
-            resp = await client.post(
-                f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/setWebhook",
-                json={"url": webhook_url, "drop_pending_updates": True},
-            )
-            result = resp.json()
-            if result.get("ok"):
-                logger.info(f"✅ Telegram webhook set: {webhook_url}")
-            else:
-                logger.warning(f"⚠️ Webhook registration issue: {result}")
+        async def register_webhook():
+            try:
+                async with httpx.AsyncClient() as client:
+                    resp = await client.post(
+                        f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/setWebhook",
+                        json={"url": webhook_url, "drop_pending_updates": True},
+                    )
+                    result = resp.json()
+                    if result.get("ok"):
+                        logger.info(f"✅ Telegram webhook set: {webhook_url}")
+                    else:
+                        logger.warning(f"⚠️ Webhook registration issue: {result}")
+            except Exception as e:
+                logger.error(f"❌ Webhook registration failed: {e}")
+
+        asyncio.create_task(register_webhook())
     else:
         logger.warning("⚠️ No RAILWAY_PUBLIC_DOMAIN set, webhook not registered automatically")
 

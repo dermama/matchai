@@ -114,7 +114,7 @@ class ShizukuDataCollector(
             "uiautomator dump /sdcard/matchai_ui.xml 2>&1"
         )
 
-        if (!dumpResult.success && !dumpResult.output.contains("dumped")) {
+        if (!dumpResult.success && dumpResult.output?.contains("dumped") != true) {
             // Fallback: use accessibility dump
             val accDump = shizuku.executeShellCommand(
                 "dumpsys accessibility | grep -A5 'Window:' | head -50"
@@ -166,7 +166,7 @@ class ShizukuDataCollector(
                     title = line.trim(),
                     visible = true,
                 )
-            }
+            } ?: emptyList()
     }
 
     // ─── Running Tasks ─────────────────────────────────────────────────────────
