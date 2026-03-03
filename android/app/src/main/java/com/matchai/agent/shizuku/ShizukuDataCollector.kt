@@ -480,7 +480,7 @@ class ShizukuDataCollector(
         val idx = text.indexOf(key)
         if (idx == -1) return ""
         val start = idx + key.length
-        val end   = text.indexOf(Regex("""[\s,\n]"""), start) ?: text.length
+        val end = Regex("""[\s,\n]""").find(text, start)?.range?.first ?: text.length
         return text.substring(start, minOf(end, text.length)).trim()
     }
 
