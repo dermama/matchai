@@ -23,8 +23,8 @@ from utils.logger import setup_logger
 logger = setup_logger("matchai.main")
 
 # ─── Environment ──────────────────────────────────────────────────────────────
-TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
-TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 RAILWAY_PUBLIC_DOMAIN = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "")
 PORT = int(os.environ.get("PORT", 8000))
 

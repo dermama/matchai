@@ -5,20 +5,24 @@ Telegram Handler — Sends messages, photos, and updates to users.
 import base64
 import logging
 import os
-
 import httpx
 
 logger = logging.getLogger("matchai.telegram")
-
-TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
-BASE_URL = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
-
 
 class TelegramHandler:
     """Handles all outgoing Telegram communications."""
 
     def __init__(self):
         self.client = httpx.AsyncClient(timeout=30.0)
+        self.token = os.environ.get("TELEGRAM_BOT_TOKEN")
+        if not self.token:
+            logger.warning("⚠️ TELEGRAM_BOT_TOKEN not found in environment")
+
+    @property
+    def base_url(self) -> str | None:
+        if not self.token:
+            return None
+        return f"https://api.telegram.org/bot{self.token}"
 
     async def send_message(
         self,
@@ -26,9 +30,13 @@ class TelegramHandler:
         text: str,
         parse_mode: str = "Markdown",
     ) -> bool:
+        url = self.base_url
+        if not url:
+            logger.debug(f"🚫 Skip send_message (No Token): {text[:50]}...")
+            return False
         try:
             resp = await self.client.post(
-                f"{BASE_URL}/sendMessage",
+                f"{url}/sendMessage",
                 json={
                     "chat_id": chat_id,
                     "text": text,
@@ -47,10 +55,13 @@ class TelegramHandler:
         caption: str = "",
     ) -> bool:
         """Send a screenshot to the user."""
+        url = self.base_url
+        if not url:
+            return False
         try:
             image_bytes = base64.b64decode(image_base64)
             resp = await self.client.post(
-                f"{BASE_URL}/sendPhoto",
+                f"{url}/sendPhoto",
                 data={"chat_id": str(chat_id), "caption": caption},
                 files={"photo": ("screenshot.png", image_bytes, "image/png")},
             )
@@ -66,9 +77,12 @@ class TelegramHandler:
         filename: str,
         caption: str = "",
     ) -> bool:
+        url = self.base_url
+        if not url:
+            return False
         try:
             resp = await self.client.post(
-                f"{BASE_URL}/sendDocument",
+                f"{url}/sendDocument",
                 data={"chat_id": str(chat_id), "caption": caption},
                 files={"document": (filename, file_bytes, "application/octet-stream")},
             )
@@ -79,9 +93,12 @@ class TelegramHandler:
 
     async def send_typing(self, chat_id: str | int) -> None:
         """Show 'typing...' indicator."""
+        url = self.base_url
+        if not url:
+            return
         try:
             await self.client.post(
-                f"{BASE_URL}/sendChatAction",
+                f"{url}/sendChatAction",
                 json={"chat_id": chat_id, "action": "typing"},
             )
         except Exception:
@@ -94,9 +111,12 @@ class TelegramHandler:
         text: str,
         parse_mode: str = "Markdown",
     ) -> bool:
+        url = self.base_url
+        if not url:
+            return False
         try:
             resp = await self.client.post(
-                f"{BASE_URL}/editMessageText",
+                f"{url}/editMessageText",
                 json={
                     "chat_id": chat_id,
                     "message_id": message_id,
