@@ -184,30 +184,32 @@ class TelegramFormatter:
             self.message_id = await self.formatter.send_message(self.chat_id, text)
             return self
 
-        async def update(self, step_name: str, success: bool = True):
-            self.steps_done.append({"name": step_name, "success": success})
+        async def update(self, step_name: str, current: int = 0, total: int = 0, status: str = ""):
+            """Handle the 4-arg callback from AdaptiveExecutor."""
+            if "done" in status.lower() or "success" in status.lower():
+                self.steps_done.append({"name": step_name, "success": True})
+                current_step = None
+            elif "fail" in status.lower():
+                self.steps_done.append({"name": step_name, "success": False})
+                current_step = None
+            else:
+                # Step is running
+                current_step = step_name
+
             elapsed = time.time() - self.start_time
             text = self.formatter._build_progress_message(
                 self.task_summary,
                 self.steps_done,
-                None,
-                self.total_steps,
+                current_step,
+                total or self.total_steps,
                 elapsed,
             )
             if self.message_id:
                 await self.formatter.edit_message(self.chat_id, self.message_id, text)
 
-        async def step_running(self, step_name: str):
-            elapsed = time.time() - self.start_time
-            text = self.formatter._build_progress_message(
-                self.task_summary,
-                self.steps_done,
-                step_name,
-                self.total_steps,
-                elapsed,
-            )
-            if self.message_id:
-                await self.formatter.edit_message(self.chat_id, self.message_id, text)
+        async def log_message(self, message: str):
+            """Send a high-priority technical log message immediately."""
+            await self.formatter.send_message(self.chat_id, f"📝 `[LOG]` {message}")
 
         async def finish(self, success: bool, message: str, screenshot_b64: str = ""):
             elapsed = time.time() - self.start_time

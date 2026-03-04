@@ -204,6 +204,7 @@ class TaskStateMachine:
             await self.formatter.send_typing(task.chat_id)
 
             # Get initial device state (structured data preferred)
+            await self.formatter.send_message(task.chat_id, "🔍 `[LOG]` جاري فحص حالة الهاتف (Shizuku)...")
             device_state = await self._get_device_state(task)
 
             # Try template first (faster, battle-tested)
@@ -256,11 +257,18 @@ class TaskStateMachine:
             await progress.start()
 
             # Progress callback for live updates
-            async def on_progress(step_name: str, completed: int, total: int, status: str):
-                if "done" in status:
-                    await progress.update(step_name, success="✅" in status)
-                else:
-                    await progress.step_running(step_name)
+            async def on_progress(step_name: str, current: int, total: int, status: str):
+                try:
+                    await progress.update(step_name, current, total, status)
+                    # Send an extra log message for major status changes
+                    if "running" in status.lower():
+                        await progress.log_message(f"▶️ جاري تنفيذ: {step_name}")
+                    elif "done" in status.lower() or "success" in status.lower():
+                        await progress.log_message(f"✅ اكتملت: {step_name}")
+                    elif "fail" in status.lower():
+                        await progress.log_message(f"❌ فشلت: {step_name}")
+                except Exception as log_err:
+                    logger.warning(f"Failed to send real-time progress: {log_err}")
 
             # Execute with self-correcting adaptive loop
             ctx = await self.executor.execute_plan(
