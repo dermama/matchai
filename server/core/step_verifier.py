@@ -68,7 +68,7 @@ class StepVerifier:
                 return ok
             except Exception as e:
                 logger.warning(f"Verification strategy error for '{action}': {e}")
-                return True  # Don't block execution on verifier errors
+                return False  # Block execution on verifier errors so AI can retry
 
         # Generic: did the screen change AT ALL?
         return self._screen_changed(before_state, after_state)
@@ -91,7 +91,10 @@ class StepVerifier:
         if app_name and app_name.lower() in fg_label:
             return True
         # Check if screen has new content at all (at minimum)
-        return self._screen_changed(before, after)
+        changed = self._screen_changed(before, after)
+        if not changed:
+            logger.warning(f"Verify open_app failed: still on {fg_pkg}, screen didn't change")
+        return changed
 
     async def _verify_element_tapped(self, step, params, before, after, result) -> bool:
         """Check that SOMETHING changed after tapping an element."""
@@ -105,12 +108,16 @@ class StepVerifier:
         for el in elements_after:
             if text.lower() in el.get("text", "").lower() and el.get("checked"):
                 return True
-        # No change but command succeeded → accept (some taps have subtle effects)
-        return result.status != "failed" if hasattr(result, 'status') else True
+        # No change means the tap did nothing (e.g. tapped dead space)
+        logger.warning(f"Verify tap_element failed: tapping '{text}' produced no screen change.")
+        return False
 
     async def _verify_tap(self, step, params, before, after, result) -> bool:
         """Generic tap verification — screen should change."""
-        return self._screen_changed(before, after) or True  # Accept if command ok
+        changed = self._screen_changed(before, after)
+        if not changed:
+            logger.warning(f"Verify tap failed: screen did not change.")
+        return changed
 
     async def _verify_text_typed(self, step, params, before, after, result) -> bool:
         """Verify typed text appears somewhere on screen."""
@@ -161,14 +168,18 @@ class StepVerifier:
         """Check WiFi state actually changed."""
         before_wifi = before.get("wifi_state", "")
         after_wifi  = after.get("wifi_state", "")
-        return before_wifi != after_wifi or True  # Accept if we can't determine
+        changed = (before_wifi != after_wifi)
+        if hasattr(result, 'status') and result.status == "success" and not before_wifi and not after_wifi:
+            return True # Accept if we don't have wifi telemetry but command succeeded via exit code 0
+        return changed
 
     # ─── Helpers ──────────────────────────────────────────────────────────────
 
     def _screen_changed(self, before: dict, after: dict) -> bool:
         """Check if screen content meaningfully changed between two states."""
         if not before or not after:
-            return True  # Can't compare, assume changed
+            logger.warning("Verify screen_changed: missing state data.")
+            return False  # Can't compare, assume failed so AI retries collecting state
 
         before_text = before.get("screen_text", "")
         after_text  = after.get("screen_text", "")

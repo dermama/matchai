@@ -66,17 +66,17 @@ class ShizukuDataCollector(
     suspend fun getForegroundApp(): ForegroundAppInfo {
         // Get the top activity (most reliable method)
         val topActivity = shizuku.executeShellCommand(
-            "dumpsys activity activities | grep -E 'mCurrentFocus|mFocusedApp|topActivity' | head -5"
+            "dumpsys activity activities | grep -E 'mCurrentFocus|mFocusedApp|topActivity'"
         )
 
         // Get focused package via window manager
         val focusedPkg = shizuku.executeShellCommand(
-            "dumpsys window windows | grep -E 'mCurrentFocus|mFocusedApp' | head -3"
+            "dumpsys window windows | grep -E 'mCurrentFocus|mFocusedApp'"
         )
 
         // Get activity stack top
         val activityStack = shizuku.executeShellCommand(
-            "dumpsys activity | grep 'mResumedActivity' | head -3"
+            "dumpsys activity | grep 'mResumedActivity'"
         )
 
         // Parse package name from output
@@ -109,30 +109,30 @@ class ShizukuDataCollector(
      * Much faster and more reliable than screenshot OCR.
      */
     suspend fun getUIHierarchy(): UIHierarchyInfo {
-        // Dump UI XML to file
+        // Dump UI XML to file. Use /data/local/tmp as /sdcard causes Permission Denied on Android 11+
         val dumpResult = shizuku.executeShellCommand(
-            "uiautomator dump /sdcard/matchai_ui.xml 2>&1"
+            "uiautomator dump /data/local/tmp/matchai_ui.xml 2>&1"
         )
 
         if (!dumpResult.success && dumpResult.output?.contains("dumped") != true) {
-            // Fallback: use accessibility dump
+            // Fallback: use accessibility dump (Remove pipe to avoid broken pipe SIGPIPE)
             val accDump = shizuku.executeShellCommand(
-                "dumpsys accessibility | grep -A5 'Window:' | head -50"
+                "dumpsys accessibility | grep -A5 'Window:'"
             )
             return UIHierarchyInfo(
                 available = false,
                 elements  = emptyList(),
-                rawText   = accDump.output ?: "",
+                rawText   = accDump.output?.take(1000) ?: "",
             )
         }
 
         // Read the XML file
         val xmlContent = shizuku.executeShellCommand(
-            "cat /sdcard/matchai_ui.xml"
+            "cat /data/local/tmp/matchai_ui.xml"
         )
 
         // Cleanup
-        shizuku.executeShellCommand("rm -f /sdcard/matchai_ui.xml")
+        shizuku.executeShellCommand("rm -f /data/local/tmp/matchai_ui.xml")
 
         // Parse XML to extract UI elements
         val elements = parseUIXml(xmlContent.output ?: "")
@@ -156,11 +156,12 @@ class ShizukuDataCollector(
      */
     suspend fun getWindowsList(): List<WindowInfo> {
         val result = shizuku.executeShellCommand(
-            "dumpsys window windows | grep -E 'Window #|mOwnerUid|Requested|mBaseLayer|isVisible' | head -80"
+            "dumpsys window windows | grep -E 'Window #|mOwnerUid|Requested|mBaseLayer|isVisible'"
         )
 
         return result.output?.lines()
             ?.filter { it.contains("Window #") }
+            ?.take(40)
             ?.map { line ->
                 WindowInfo(
                     title = line.trim(),
@@ -176,10 +177,10 @@ class ShizukuDataCollector(
      */
     suspend fun getRunningTasks(): List<RunningTaskInfo> {
         val result = shizuku.executeShellCommand(
-            "am stack list 2>/dev/null | head -30"
+            "am stack list 2>/dev/null"
         )
         val altResult = shizuku.executeShellCommand(
-            "dumpsys activity recents | grep 'Recent #' | head -15"
+            "dumpsys activity recents | grep 'Recent #'"
         )
 
         return (result.output ?: "" + "\n" + (altResult.output ?: ""))
@@ -197,7 +198,7 @@ class ShizukuDataCollector(
      */
     suspend fun getActiveNotifications(): List<NotificationInfo> {
         val result = shizuku.executeShellCommand(
-            "dumpsys notification | grep -A3 'NotificationRecord{' | head -60"
+            "dumpsys notification | grep -A3 'NotificationRecord{'"
         )
 
         return (result.output ?: "")
@@ -215,7 +216,7 @@ class ShizukuDataCollector(
      */
     suspend fun getActiveInputMethod(): InputMethodInfo {
         val result = shizuku.executeShellCommand(
-            "dumpsys input_method | grep -E 'mInputShown|mCurrentInputMethodId|mCurId' | head -5"
+            "dumpsys input_method | grep -E 'mInputShown|mCurrentInputMethodId|mCurId'"
         )
         val isKeyboardShown = result.output?.contains("mInputShown=true") == true
         return InputMethodInfo(
@@ -228,9 +229,9 @@ class ShizukuDataCollector(
 
     suspend fun getFocusedWindow(): String {
         val result = shizuku.executeShellCommand(
-            "dumpsys window | grep mCurrentFocus | head -1"
+            "dumpsys window | grep mCurrentFocus"
         )
-        return result.output?.trim() ?: ""
+        return result.output?.lines()?.firstOrNull()?.trim() ?: ""
     }
 
     // ─── System Info ──────────────────────────────────────────────────────────
@@ -239,16 +240,16 @@ class ShizukuDataCollector(
      * Collect relevant system state: battery, memory, display, etc.
      */
     suspend fun getSystemInfo(): SystemStateInfo {
-        val battery   = shizuku.executeShellCommand("dumpsys battery | grep -E 'level:|status:|plugged:' | head -3")
-        val memory    = shizuku.executeShellCommand("cat /proc/meminfo | grep -E 'MemTotal|MemFree|MemAvailable' | head -3")
-        val display   = shizuku.executeShellCommand("dumpsys display | grep -E 'mDisplayWidth|mDisplayHeight|DisplayName' | head -3")
-        val wifi      = shizuku.executeShellCommand("dumpsys wifi | grep -E 'mNetworkInfo|mWifiInfo|SSID' | head -5")
+        val battery   = shizuku.executeShellCommand("dumpsys battery | grep -E 'level:|status:|plugged:'")
+        val memory    = shizuku.executeShellCommand("cat /proc/meminfo | grep -E 'MemTotal|MemFree|MemAvailable'")
+        val display   = shizuku.executeShellCommand("dumpsys display | grep -E 'mDisplayWidth|mDisplayHeight|DisplayName'")
+        val wifi      = shizuku.executeShellCommand("dumpsys wifi | grep -E 'mNetworkInfo|mWifiInfo|SSID'")
 
         return SystemStateInfo(
-            battery = battery.output?.trim() ?: "",
-            memory  = memory.output?.trim() ?: "",
-            display = display.output?.trim() ?: "",
-            wifi    = wifi.output?.trim() ?: "",
+            battery = battery.output?.lines()?.take(3)?.joinToString(" ")?.trim() ?: "",
+            memory  = memory.output?.lines()?.take(3)?.joinToString(" ")?.trim() ?: "",
+            display = display.output?.lines()?.take(3)?.joinToString(" ")?.trim() ?: "",
+            wifi    = wifi.output?.lines()?.take(5)?.joinToString(" ")?.trim() ?: "",
         )
     }
 
@@ -260,15 +261,15 @@ class ShizukuDataCollector(
      */
     suspend fun getAppDetails(packageName: String): AppDetails {
         val result = shizuku.executeShellCommand(
-            "dumpsys package $packageName | grep -E 'versionName|versionCode|applicationInfo|firstInstall|lastUpdate' | head -10"
+            "dumpsys package $packageName | grep -E 'versionName|versionCode|applicationInfo|firstInstall|lastUpdate'"
         )
 
         val labelResult = shizuku.executeShellCommand(
-            "pm list packages -f | grep $packageName | head -1"
+            "pm list packages -f | grep $packageName"
         )
 
         val activities = shizuku.executeShellCommand(
-            "pm dump $packageName | grep 'Activity ' | head -20"
+            "pm dump $packageName | grep 'Activity '"
         )
 
         return AppDetails(
