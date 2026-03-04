@@ -37,7 +37,9 @@ async def lifespan(app: FastAPI):
 
     # Register Telegram webhook in background to not block healthcheck
     if RAILWAY_PUBLIC_DOMAIN:
-        webhook_url = f"https://{RAILWAY_PUBLIC_DOMAIN}/webhook/telegram"
+        # Prevent double https:// if user accidentally added it in Railway env vars
+        clean_domain = RAILWAY_PUBLIC_DOMAIN.replace("https://", "").replace("http://", "").rstrip("/")
+        webhook_url = f"https://{clean_domain}/webhook/telegram"
         async def register_webhook():
             try:
                 async with httpx.AsyncClient() as client:
