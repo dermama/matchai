@@ -90,6 +90,22 @@ app.include_router(device_router, prefix="/device")
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled error: {exc}", exc_info=True)
+    
+    if TELEGRAM_CHAT_ID and TELEGRAM_BOT_TOKEN:
+        try:
+            import traceback
+            handler = TelegramHandler()
+            tb_str = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+            error_msg = (
+                f"🚨 *خطأ داخلي في السيرفر (500)* 🚨\n\n"
+                f"*المسار:* `{request.url.path}`\n"
+                f"*الخطأ:* `{exc}`\n\n"
+                f"*التفاصيل:*\n```python\n{tb_str[-1000:]}\n```"
+            )
+            asyncio.create_task(handler.send_message(TELEGRAM_CHAT_ID, error_msg))
+        except Exception as notification_error:
+            logger.error(f"Failed to send error to Telegram: {notification_error}")
+
     return JSONResponse(
         status_code=500,
         content={"error": str(exc), "status": "error"},

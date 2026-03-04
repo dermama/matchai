@@ -44,3 +44,10 @@ async def health():
 @router.get("/")
 async def root():
     return {"message": "🤖 Matchai AI Agent Server", "version": "1.0.0"}
+
+
+@router.get("/crash_test")
+async def crash_test():
+    """Test endpoint to intentionally crash the server and verify Telegram error reporting."""
+    raise RuntimeError("هذا انهيار متعمد لاختبار نظام إرسال الأخطاء إلى تليجرام!")
+

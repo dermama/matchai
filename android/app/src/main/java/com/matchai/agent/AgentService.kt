@@ -135,7 +135,9 @@ class AgentService : Service() {
             } catch (e: CancellationException) {
                 break
             } catch (e: Exception) {
-                Log.e(TAG, "Poll error: ${e.message}")
+                val err = "⚠️ Poll error: ${e.message}"
+                Log.e(TAG, err)
+                sendLogToUI(err)
                 delay(5000) // Wait before retry
             }
         }
@@ -360,7 +362,9 @@ class AgentService : Service() {
                 else -> CommandResult(success = false, error = "Unknown action: ${command.action}")
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Command execution error: ${e.message}", e)
+            val err = "❌ Command execution error: ${e.message}"
+            Log.e(TAG, err, e)
+            sendLogToUI(err)
             CommandResult(success = false, error = e.message ?: "Execution error")
         }
 
@@ -378,7 +382,9 @@ class AgentService : Service() {
                 error              = result.error ?: "",
             )
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to send result: ${e.message}")
+            val err = "❌ Failed to send result: ${e.message}"
+            Log.e(TAG, err)
+            sendLogToUI(err)
         }
 
     }
