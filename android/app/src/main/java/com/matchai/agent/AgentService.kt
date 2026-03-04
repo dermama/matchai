@@ -98,15 +98,28 @@ class AgentService : Service() {
 
     private suspend fun runAgent() {
         if (serverClient.serverUrl.contains("your-app.railway.app")) {
-            Log.e(TAG, "❌ Cannot start: Server URL is not configured.")
+            val err = "❌ Cannot start: Server URL is not configured."
+            Log.e(TAG, err)
+            sendLogToUI(err)
             updateNotification("🔴 Waiting for Configuration")
+            stopSelf()
             return
         }
 
         // Register device with server
-        registerWithServer()
+        sendLogToUI("🔄 Connecting to server: ${serverClient.serverUrl} ...")
+        val registered = registerWithServer()
+        if (!registered) {
+            val err = "❌ Aborting: Could not connect to server."
+            Log.e(TAG, err)
+            sendLogToUI(err)
+            updateNotification("🔴 Connection Failed (Check URL/Secret)")
+            stopSelf()
+            return
+        }
 
         Log.i(TAG, "▶ Starting command poll loop")
+        sendLogToUI("🟢 Active — Waiting for commands")
         updateNotification("🟢 Active — Waiting for commands")
 
         while (isRunning) {
@@ -128,8 +141,8 @@ class AgentService : Service() {
         }
     }
 
-    private suspend fun registerWithServer() {
-        try {
+    private suspend fun registerWithServer(): Boolean {
+        return try {
             val screenSize = screenController.getScreenSize()
             serverClient.registerDevice(
                 deviceId = android.os.Build.MODEL,
@@ -138,11 +151,23 @@ class AgentService : Service() {
                 screenWidth = screenSize.first,
                 screenHeight = screenSize.second,
             )
-            Log.i(TAG, "✅ Registered with server")
+            Log.i(TAG, "✅ Connected to server successfully")
+            sendLogToUI("✅ Connected to server successfully!")
+            true
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Registration failed: ${e.message}")
+            val err = "❌ Connection failed: ${e.message}"
+            Log.e(TAG, err)
+            sendLogToUI(err)
+            false
         }
     }
+
+    private fun sendLogToUI(msg: String) {
+        val intent = Intent("com.matchai.agent.LOG_UPDATE")
+        intent.putExtra("message", msg)
+        sendBroadcast(intent)
+    }
+
 
     // ─── Command Dispatcher ────────────────────────────────────────────────────
 

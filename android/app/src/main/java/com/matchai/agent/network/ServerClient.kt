@@ -141,8 +141,12 @@ class ServerClient(
             .post(payload.toString().toRequestBody(jsonMedia))
             .header("X-Device-Secret", deviceSecret)
             .build()
-        client.newCall(request).execute().also {
-            Log.i(TAG, "Device registered: ${it.code}")
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) {
+                val errorBody = response.body?.string() ?: ""
+                throw Exception("HTTP ${response.code}: $errorBody")
+            }
+            Log.i(TAG, "Device registered: ${response.code}")
         }
     }
 }

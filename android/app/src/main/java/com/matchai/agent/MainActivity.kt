@@ -1,7 +1,10 @@
 package com.matchai.agent
 
 import android.app.AlertDialog
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -27,6 +30,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnSaveConfig: Button
     private lateinit var scrollView: ScrollView
     private val logBuffer = StringBuilder()
+
+    private val logReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val msg = intent.getStringExtra("message") ?: return
+            log(msg)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,11 +75,31 @@ class MainActivity : AppCompatActivity() {
         log("🌐 Server: ${BuildConfig.SERVER_URL}")
     }
 
+    override fun onResume() {
+        super.onResume()
+        try {
+            ContextCompat.registerReceiver(
+                this, 
+                logReceiver, 
+                IntentFilter("com.matchai.agent.LOG_UPDATE"), 
+                ContextCompat.RECEIVER_NOT_EXPORTED
+            )
+        } catch (e: Exception) {}
+    }
+
+    override fun onPause() {
+        super.onPause()
+        try {
+            unregisterReceiver(logReceiver)
+        } catch (e: Exception) {}
+    }
+
     private fun startAgentService() {
         val intent = Intent(this, AgentService::class.java)
         ContextCompat.startForegroundService(this, intent)
-        log("▶ Agent Service started")
+        log("⏳ Requesting Agent Service to start...")
     }
+
 
     private fun checkShizuku() {
         when {
