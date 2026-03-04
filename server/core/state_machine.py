@@ -133,15 +133,24 @@ class TaskStateMachine:
         # Update memory if structured data available
         if result.get("structured_data"):
             sd = result["structured_data"]
-            # Defensive check: if sd came in as a string, parse it to prevent AttributeError
-            if isinstance(sd, str):
+            # Defensive check: sometimes sd is deeply nested within multiple string layers (double serialization)
+            loop_count = 0
+            while isinstance(sd, str) and loop_count < 5:
                 import json
                 try:
-                    sd = json.loads(sd)
+                    parsed = json.loads(sd)
+                    # If parsing returns the EXACT same string, we are stuck. Break out.
+                    if parsed == sd:
+                        break
+                    sd = parsed
                 except Exception as e:
-                    logger.error(f"Failed to parse structured_data string: {e}")
-                    sd = {}
-                
+                    logger.warning(f"Failed to deeply parse structured_data string: {e}")
+                    break
+                loop_count += 1
+            
+            # If it STILL ended up as a string after peeling layers, forcibly wrap it in a dict to prevent .get() crashes
+            if isinstance(sd, str):
+                sd = {"raw_text_payload": sd}
             if isinstance(sd, dict):
                 pkg = sd.get("foreground_app", {}).get("package", "")
                 if pkg:
