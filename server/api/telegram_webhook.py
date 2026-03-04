@@ -66,6 +66,24 @@ async def telegram_webhook(request: Request):
     # Security: only allow authorized chat
     if chat_id != TELEGRAM_CHAT_ID:
         logger.warning(f"⛔ Unauthorized access attempt from chat_id: {chat_id}")
+        
+        # Send a helpful message back so the user knows what's wrong
+        if chat_id:
+            try:
+                import httpx
+                import asyncio
+                async def notify_unauthorized():
+                    async with httpx.AsyncClient() as client:
+                        token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+                        msg = f"⛔ عذراً، أنت لست المالك المعتمد لهذا البوت.\n\nمعرف الدردشة الخاص بك هو: `{chat_id}`\n\nإذا كنت أنت المالك، يرجى نسخ هذا الرقم ووضعه في متغير TELEGRAM_CHAT_ID في إعدادات السيرفر (Railway)."
+                        await client.post(
+                            f"https://api.telegram.org/bot{token}/sendMessage",
+                            json={"chat_id": chat_id, "text": msg, "parse_mode": "Markdown"}
+                        )
+                asyncio.create_task(notify_unauthorized())
+            except Exception:
+                pass
+                
         return {"status": "unauthorized"}
 
     if not text:

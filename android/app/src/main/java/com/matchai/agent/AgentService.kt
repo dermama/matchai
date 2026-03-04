@@ -97,6 +97,12 @@ class AgentService : Service() {
     // ─── Agent Loop ───────────────────────────────────────────────────────────
 
     private suspend fun runAgent() {
+        if (serverClient.serverUrl.contains("your-app.railway.app")) {
+            Log.e(TAG, "❌ Cannot start: Server URL is not configured.")
+            updateNotification("🔴 Waiting for Configuration")
+            return
+        }
+
         // Register device with server
         registerWithServer()
 

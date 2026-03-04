@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit
  * Uses long-polling to receive commands and POSTs results.
  */
 class ServerClient(
-    private val serverUrl: String,
+    val serverUrl: String,
     private val deviceSecret: String,
 ) {
     companion object { private const val TAG = "ServerClient" }
