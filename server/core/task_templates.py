@@ -289,15 +289,30 @@ class TemplateEngine:
 
         params_list = ", ".join(template.required_params + template.optional_params)
         prompt = f"""
-استخرج المعاملات التالية من هذا الأمر: [{params_list}]
+أنت خبير في استخراج المعاملات من الأوامر العربية والإنجليزية.
+المطلوب استخراج: [{params_list}]
 الأمر: "{command}"
 
-أرجع JSON فقط: {{{", ".join(f'"{p}": "قيمة أو null"' for p in template.required_params)}}}
+قواعد الاستخراج:
+1. إذا كان الأمر "ابحث عن [كلمة] في يوتيوب"، فإن search_query هي "[كلمة]".
+2. إذا كان الأمر "أرسل [رسالة] لـ [اسم]"، فإن contact_name هو "[اسم]" و message هي "[رسالة]".
+3. استخرج القيم بدقة كما وردت.
+
+أرجع JSON فقط وصريح:
+{{{", ".join(f'"{p}": "value"' for p in template.required_params)}}}
 """
         try:
             import asyncio
             response = await asyncio.to_thread(self.gemini.model.generate_content, prompt)
             extracted = self.gemini._extract_json(response.text)
+            
+            # Regex Fallback for search_query if Gemini fails or returns empty
+            if "search_query" in template.required_params and not extracted.get("search_query"):
+                match = re.search(r"(?:ابحث عن|بحث عن|search for|find)\s+(.+?)(?:\s+في|\s+في\s+يوتيوب|\s+on\s+youtube|$)", command, re.IGNORECASE)
+                if match:
+                    extracted["search_query"] = match.group(1).strip()
+                    logger.info(f"Fallback regex extracted search_query: {extracted['search_query']}")
+
             logger.info(f"Extracted params for {template.name}: {extracted}")
             return extracted
         except Exception as e:

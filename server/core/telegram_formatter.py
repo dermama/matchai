@@ -213,8 +213,13 @@ class TelegramFormatter:
             elapsed = time.time() - self.start_time
             icon  = "✅" if success else "❌"
             final = f"{icon} *{self.task_summary}*\n\n{message}\n\n⏱️ `{elapsed:.1f}s`"
+            markup = {
+                "inline_keyboard": [[
+                    {"text": "🛠️ التقرير التقني", "callback_data": "diagnostics"}
+                ]]
+            }
             if screenshot_b64:
-                await self.formatter.send_photo(self.chat_id, screenshot_b64, caption=final)
+                await self.formatter.send_photo(self.chat_id, screenshot_b64, caption=final, reply_markup=markup)
                 # Delete progress message
                 if self.message_id:
                     await self.formatter.delete_message(self.chat_id, self.message_id)

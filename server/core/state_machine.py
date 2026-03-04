@@ -95,6 +95,7 @@ class TaskStateMachine:
 
         # Single active task (one device)
         self.active_task: Task | None = None
+        self.last_completed_task: Task | None = None
 
         # Command queue and result futures
         self._pending_commands: asyncio.Queue = asyncio.Queue()
@@ -286,6 +287,9 @@ class TaskStateMachine:
 
             # Save to AI memory for future tasks
             self.memory.record_task(ctx)
+            task.steps_results = ctx.completed_steps + ctx.failed_steps
+            self.last_completed_task = task
+            
             logger.info(
                 f"✅ Task [{task.task_id}] done in "
                 f"{(time.time()-start)*1000:.0f}ms | "

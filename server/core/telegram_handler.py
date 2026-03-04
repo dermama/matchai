@@ -41,6 +41,7 @@ class TelegramHandler:
                     "chat_id": chat_id,
                     "text": text,
                     "parse_mode": parse_mode,
+                    "reply_markup": reply_markup,
                 },
             )
             return resp.json().get("ok", False)
