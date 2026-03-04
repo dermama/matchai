@@ -6,15 +6,18 @@ Matchai يحوّل هاتف أندرويد إلى وكيل ذكاء اصطناع
 
 ---
 
+### 📖 [دليل الإعداد التفصيلي (العربية)](file:///c:/Users/ersan/Desktop/ب/SETUP_GUIDE_AR.md)
+
+---
+
 ## 🏗️ المكونات
 
 | المكون | التقنية | الوظيفة |
 |--------|---------|---------|
-| **السيرفر** | FastAPI + Railway | التخطيط والتنسيق |
-| **الذكاء** | Gemini 2.0 Flash | تخطيط المهام المعقدة |
-| **التنفيذ** | Groq Llama 3.2 Vision | تحليل الشاشة والقرارات السريعة |
-| **التطبيق** | Kotlin + Shizuku | التحكم الفعلي بالهاتف |
-| **البوت** | Telegram Bot API | واجهة المستخدم |
+| **السيرفر** | FastAPI + Railway | التنسيق واستقبال رسائل تيليجرام |
+| **الذكاء** | Gemini 2.0 Flash | تخطيط المهام والتحليل المنطقي |
+| **الرؤية** | Groq Llama 3.2 | تحليل الشاشة (Visual Processing) |
+| **التنفيذ** | Kotlin + Shizuku | التحكم الفعلي بالأندرويد بدون Root |
 
 ---
 
@@ -60,12 +63,14 @@ DEVICE_SECRET       ← matchai_secret_2024
 
 ### 5. إعداد الهاتف
 1. ثبّت Shizuku من [Play Store](https://play.google.com/store/apps/details?id=moe.shizuku.privileged.api)
-2. فعّل Wireless Debugging (الإعدادات → خيارات المطورين)
-3. افتح Shizuku واضغط "Start via Wireless Debugging"
-4. ثبّت `app-debug.apk` الذي وصل على تيليجرام
-5. افتح التطبيق → اضغط **Shizuku** → اقبل الصلاحية
-6. اضغط **Accessibility** → فعّل "Matchai Agent"
-7. الهاتف متصل الآن! 🎉
+2. فعّل Wireless Debugging (من خيارات المطور) وقم بتشغيل Shizuku.
+3. ثبّت تطبيق Matchai واقبل صلاحية Shizuku.
+4. **الربط بالسيرفر (جديد v7):**
+   - افتح التطبيق -> قسم **Configuration**.
+   - أدخل **Server URL** (رابط Railway) و **Device Secret**.
+   - اضغط **Save & Restart**.
+5. فعّل صلاحية الـ Accessibility لـ "Matchai Agent" من إعدادات الهاتف.
+6. الهاتف متصل الآن! 🎉
 
 ---
 
