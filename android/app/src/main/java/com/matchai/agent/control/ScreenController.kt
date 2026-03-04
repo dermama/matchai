@@ -18,24 +18,24 @@ class ScreenController(
 ) {
     companion object {
         private const val TAG = "ScreenController"
-        private const val TEMP_FILE = "/sdcard/matchai_screenshot.png"
     }
 
     /** Capture screen using ADB screencap and return base64. */
     suspend fun captureBase64(): String = withContext(Dispatchers.IO) {
         try {
-            // Use screencap for reliable capture
-            val result = shizuku.executeShellCommand("screencap -p $TEMP_FILE")
-            if (!result.success) {
+            // Use screencap and pipe directly to base64 to avoid all /sdcard/ permission issues
+            val result = shizuku.executeShellCommand("screencap -p | base64")
+            if (!result.success || result.output.isNullOrBlank()) {
                 Log.e(TAG, "screencap failed: ${result.error}")
                 return@withContext ""
             }
 
-            // Read file and encode
-            val file = File(TEMP_FILE)
-            if (!file.exists()) return@withContext ""
-
-            val bitmap = BitmapFactory.decodeFile(TEMP_FILE) ?: return@withContext ""
+            // Decode the shell base64 output into a byte array
+            val cleanBase64 = result.output.replace("\n", "").replace("\r", "")
+            val imageBytes = Base64.decode(cleanBase64, Base64.DEFAULT)
+            
+            // Decode to bitmap
+            val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size) ?: return@withContext ""
 
             // Compress for faster transmission (scale down if very large)
             val maxDim = 1080
@@ -49,13 +49,12 @@ class ScreenController(
                 )
             } else bitmap
 
+            // Re-encode scaled bitmap to JPEG base64
             val stream = ByteArrayOutputStream()
             scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 85, stream)
-            val b64 = Base64.encodeToString(stream.toByteArray(), Base64.NO_WRAP)
+            val finalB64 = Base64.encodeToString(stream.toByteArray(), Base64.NO_WRAP)
 
-            // Cleanup
-            shizuku.executeShellCommand("rm -f $TEMP_FILE")
-            b64
+            finalB64
         } catch (e: Exception) {
             Log.e(TAG, "capture error: ${e.message}")
             ""
