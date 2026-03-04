@@ -207,7 +207,12 @@ class TaskStateMachine:
             device_state = await self._get_device_state(task)
 
             # Try template first (faster, battle-tested)
-            plan = await self.templates.build_plan(task.user_command)
+            try:
+                plan = await self.templates.build_plan(task.user_command)
+            except Exception as e:
+                logger.warning(f"Template build_plan failed: {e}")
+                plan = None
+                
             if plan:
                 task.from_template = plan.get("from_template")
                 logger.info(f"📋 Using template: {task.from_template}")

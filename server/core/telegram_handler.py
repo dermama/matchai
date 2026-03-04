@@ -6,6 +6,7 @@ import base64
 import logging
 import os
 import httpx
+import json
 
 logger = logging.getLogger("matchai.telegram")
 
@@ -54,6 +55,7 @@ class TelegramHandler:
         chat_id: str | int,
         image_base64: str,
         caption: str = "",
+        reply_markup: Optional[dict] = None,
     ) -> bool:
         """Send a screenshot to the user."""
         url = self.base_url
@@ -61,9 +63,13 @@ class TelegramHandler:
             return False
         try:
             image_bytes = base64.b64decode(image_base64)
+            data = {"chat_id": str(chat_id), "caption": caption}
+            if reply_markup:
+                data["reply_markup"] = json.dumps(reply_markup)
+
             resp = await self.client.post(
                 f"{url}/sendPhoto",
-                data={"chat_id": str(chat_id), "caption": caption},
+                data=data,
                 files={"photo": ("screenshot.png", image_bytes, "image/png")},
             )
             return resp.json().get("ok", False)
@@ -77,14 +83,19 @@ class TelegramHandler:
         file_bytes: bytes,
         filename: str,
         caption: str = "",
+        reply_markup: Optional[dict] = None,
     ) -> bool:
         url = self.base_url
         if not url:
             return False
         try:
+            data = {"chat_id": str(chat_id), "caption": caption}
+            if reply_markup:
+                data["reply_markup"] = json.dumps(reply_markup)
+
             resp = await self.client.post(
                 f"{url}/sendDocument",
-                data={"chat_id": str(chat_id), "caption": caption},
+                data=data,
                 files={"document": (filename, file_bytes, "application/octet-stream")},
             )
             return resp.json().get("ok", False)
