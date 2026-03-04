@@ -57,7 +57,8 @@ class StepVerifier:
         params = step.get("params", {})
 
         # If command itself reported failure → skip expensive checks
-        if hasattr(result, 'status') and str(result.status) == "failed":
+        status_str = result.status.value if hasattr(result.status, 'value') else str(result.status)
+        if status_str == "failed":
             return False
 
         strategy = self._strategies.get(action)
@@ -93,7 +94,8 @@ class StepVerifier:
             
         # Trust output from the Android client if it specifically asserts success.
         # This handles cases where user said "يوتيوب", but the app label is "YouTube".
-        if result and hasattr(result, "status") and str(result.status) == "success":
+        status_str = result.status.value if result and hasattr(result.status, 'value') else (str(result.status) if result else "")
+        if status_str == "success":
             output = getattr(result, "output", "").lower()
             if "is in foreground" in output or "events injected" in output or "starting: intent" in output:
                 return True
