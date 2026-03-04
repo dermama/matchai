@@ -295,6 +295,9 @@ class TaskStateMachine:
             task.steps_results = ctx.completed_steps + ctx.failed_steps
             self.last_completed_task = task
             
+            # Send automatic technical report (v14)
+            asyncio.create_task(self._send_automatic_report(task))
+            
             logger.info(
                 f"✅ Task [{task.task_id}] done in "
                 f"{(time.time()-start)*1000:.0f}ms | "
@@ -310,6 +313,8 @@ class TaskStateMachine:
                 str(e)[:200],
                 suggestion="حاول صياغة الأمر بشكل مختلف أو تحقق من أن الهاتف متصل.",
             )
+            # Even on crash, try to send report
+            asyncio.create_task(self._send_automatic_report(task))
 
     # ─── Device State Collection ──────────────────────────────────────────────
 
@@ -335,6 +340,9 @@ class TaskStateMachine:
                         task.installed_apps,
                     )
                 if result.get("structured_data"):
+                    # Store raw data for debugging (v14)
+                    task.device_info["last_structured_data"] = result.get("structured_data")
+                    task.device_info["raw_shizuku_payload"] = result
                     return result["structured_data"]
 
         except Exception as e:
@@ -358,6 +366,41 @@ class TaskStateMachine:
             logger.warning(f"Screenshot fallback failed too: {e}")
 
         return {}
+
+    async def _send_automatic_report(self, task: Task):
+        """Generates and sends a technical JSON log to Telegram automatically."""
+        try:
+            import json
+            report_data = {
+                "task_id": task.task_id,
+                "command": task.user_command,
+                "template": task.from_template,
+                "final_state": str(task.state),
+                "steps": [
+                    {
+                        "action": r.action,
+                        "status": str(r.status),
+                        "output_preview": (r.output or "")[:200],
+                        "error": r.error
+                    } for r in task.steps_results
+                ],
+                "device_info": task.device_info,
+                "installed_apps_count": len(task.installed_apps)
+            }
+            
+            log_json = json.dumps(report_data, indent=2, ensure_ascii=False)
+            filename = f"log_{task.task_id}.json"
+            
+            # Use formatter to send as document
+            await self.formatter.send_document(
+                chat_id=task.chat_id,
+                file_bytes=log_json.encode("utf-8"),
+                filename=filename,
+                caption=f"📊 التقرير التقني التلقائي للمهمة: {task.task_id}"
+            )
+            logger.info(f"💾 Auto-report sent for task {task.task_id}")
+        except Exception as e:
+            logger.error(f"❌ Failed to send auto-report: {e}")
 
 
 # ─── Singleton ────────────────────────────────────────────────────────────────

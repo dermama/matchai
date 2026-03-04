@@ -25,7 +25,6 @@ COMMAND_SHORTCUTS = {
     "/apps": "اعرض قائمة التطبيقات المثبتة",
     "/stop": "__STOP__",
     "/help": "__HELP__",
-    "/diagnostics": "__DIAGNOSTICS__",
 }
 
 HELP_TEXT = """🤖 *Matchai — وكيل الذكاء الاصطناعي للأندرويد*
@@ -111,9 +110,6 @@ async def telegram_webhook(request: Request):
         elif mapped == "__HELP__":
             await sm.telegram.send_message(chat_id, HELP_TEXT)
             return {"status": "help_sent"}
-        elif mapped == "__DIAGNOSTICS__":
-            await send_diagnostics(chat_id)
-            return {"status": "diagnostics_sent"}
         else:
             text = mapped
 
@@ -136,45 +132,4 @@ async def handle_callback_query(callback: dict):
         await client.post(f"https://api.telegram.org/bot{token}/answerCallbackQuery", json={"callback_query_id": id})
 
     if data == "diagnostics":
-        await send_diagnostics(chat_id)
-
-
-async def send_diagnostics(chat_id: str):
-    """Generate and send a technical diagnostic report."""
-    sm = get_state_machine()
-    task = sm.last_completed_task if hasattr(sm, 'last_completed_task') else None
-    
-    if not task:
-        await sm.telegram.send_message(chat_id, "❌ لا توجد بيانات تشخيصية متاحة للمهمة الأخيرة.")
-        return
-
-    import json
-    report = [
-        "🛠️ *التقرير التشخيصي للمهمة الأخيرة*",
-        f"🆔 معرف المهمة: `{task.task_id}`",
-        f"📝 الأمر: `{task.user_command}`",
-        f"📊 الخطة: {len(task.plan.get('steps', []))} خطوات",
-        f"📦 القالب: `{task.from_template or 'تخطيط Gemini'}`",
-        "\n📝 *نتائج الخطوات:*",
-    ]
-    
-    for i, res in enumerate(task.steps_results):
-        status = "✅" if "success" in str(res.status).lower() else "❌"
-        report.append(f"{i+1}. {status} `{res.action}`: {res.output[:100]}")
-        if res.error:
-            report.append(f"   ⚠️ أخطاء: `{res.error[:100]}`")
-
-    full_text = "\n".join(report)
-    
-    # If too long, send as document
-    if len(full_text) > 4000:
-        await sm.telegram.send_message(chat_id, "📝 التقرير طويل جداً، سأرسله كملف...")
-        raw_json = json.dumps({
-            "task_id": task.task_id,
-            "command": task.user_command,
-            "plan": task.plan,
-            "results": [str(r) for r in task.steps_results]
-        }, indent=2, ensure_ascii=False)
-        await sm.formatter.send_document(chat_id, raw_json, f"diagnostics_{task.task_id}.json", "📦 بيانات التشخيص الكاملة")
-    else:
-        await sm.telegram.send_message(chat_id, full_text)
+        pass
