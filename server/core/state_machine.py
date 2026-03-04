@@ -133,14 +133,24 @@ class TaskStateMachine:
         # Update memory if structured data available
         if result.get("structured_data"):
             sd = result["structured_data"]
-            pkg = sd.get("foreground_app", {}).get("package", "")
-            if pkg:
-                self.memory.learn_from_device_state(pkg, sd)
-            if result.get("installed_apps"):
-                self.memory.update_device_profile(
-                    result.get("device_info", {}),
-                    result["installed_apps"],
-                )
+            # Defensive check: if sd came in as a string, parse it to prevent AttributeError
+            if isinstance(sd, str):
+                import json
+                try:
+                    sd = json.loads(sd)
+                except Exception as e:
+                    logger.error(f"Failed to parse structured_data string: {e}")
+                    sd = {}
+                
+            if isinstance(sd, dict):
+                pkg = sd.get("foreground_app", {}).get("package", "")
+                if pkg:
+                    self.memory.learn_from_device_state(pkg, sd)
+                if result.get("installed_apps"):
+                    self.memory.update_device_profile(
+                        result.get("device_info", {}),
+                        result["installed_apps"],
+                    )
 
         logger.debug(f"📨 Result stored for [{command_id}]")
 

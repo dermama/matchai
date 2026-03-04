@@ -90,6 +90,14 @@ class StepVerifier:
             return True
         if app_name and app_name.lower() in fg_label:
             return True
+            
+        # Trust output from the Android client if it specifically asserts success.
+        # This handles cases where user said "يوتيوب", but the app label is "YouTube".
+        if result and hasattr(result, "status") and str(result.status) == "success":
+            output = getattr(result, "output", "")
+            if "is in foreground" in output.lower():
+                return True
+
         # Check if screen has new content at all (at minimum)
         changed = self._screen_changed(before, after)
         if not changed:
