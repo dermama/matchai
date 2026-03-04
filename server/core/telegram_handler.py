@@ -7,6 +7,7 @@ import logging
 import os
 import httpx
 import json
+from typing import Optional, Any
 
 logger = logging.getLogger("matchai.telegram")
 
@@ -30,6 +31,7 @@ class TelegramHandler:
         chat_id: str | int,
         text: str,
         parse_mode: str = "Markdown",
+        reply_markup: Optional[dict] = None,
     ) -> bool:
         url = self.base_url
         if not url:
@@ -42,7 +44,7 @@ class TelegramHandler:
                     "chat_id": chat_id,
                     "text": text,
                     "parse_mode": parse_mode,
-                    "reply_markup": reply_markup,
+                    "reply_markup": json.dumps(reply_markup) if reply_markup else None,
                 },
             )
             return resp.json().get("ok", False)
