@@ -298,7 +298,7 @@ class TaskStateMachine:
                 "action":     "collect_state",
                 "params":     {"include_screenshot": False},
             })
-            result = await self.wait_for_result(command_id, timeout=15.0)
+            result = await self.wait_for_result(command_id, timeout=35.0)
             if result:
                 if result.get("installed_apps"):
                     task.installed_apps = result["installed_apps"]
@@ -321,7 +321,7 @@ class TaskStateMachine:
                 "action":     "screenshot",
                 "params":     {},
             })
-            result = await self.wait_for_result(ss_id, timeout=15.0)
+            result = await self.wait_for_result(ss_id, timeout=25.0)
             if result and result.get("success"):
                 task.last_screenshot_b64 = result.get("screenshot_b64", "")
                 task.installed_apps = result.get("installed_apps", [])

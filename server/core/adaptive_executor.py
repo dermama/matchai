@@ -119,6 +119,7 @@ class AdaptiveExecutor:
         )
         steps = list(plan.get("steps", []))
         step_index = 0
+        current_step_retries = 0
 
         logger.info(f"🚀 AdaptiveExecutor: starting '{ctx.original_goal}' ({len(steps)} steps)")
 
@@ -179,9 +180,11 @@ class AdaptiveExecutor:
 
             if verified and result.status != StepStatus.FAILED:
                 result.status = StepStatus.SUCCESS
+                result.retries = current_step_retries
                 ctx.completed_steps.append(result)
                 logger.info(f"✅ Step {step.get('step_id')} '{step.get('action')}' verified OK")
                 step_index += 1
+                current_step_retries = 0
 
                 if progress_callback:
                     await progress_callback(
@@ -190,9 +193,11 @@ class AdaptiveExecutor:
                     )
             else:
                 # Step failed or unverified
-                await self._handle_step_failure(result, step, ctx)
+                current_step_retries += 1
+                result.retries = current_step_retries
+                self._log_step_failure(result, step, current_step_retries)
 
-                if result.retries >= self.MAX_RETRIES:
+                if current_step_retries >= self.MAX_RETRIES:
                     # Check for fallback action
                     fallback = step.get("fallback_action")
                     if fallback and isinstance(fallback, dict):
@@ -204,6 +209,7 @@ class AdaptiveExecutor:
                     else:
                         ctx.failed_steps.append(result)
                         step_index += 1  # Skip this step, continue
+                        current_step_retries = 0
                         ctx.lessons_learned.append(
                             f"Step '{step.get('action')}' failed after {self.MAX_RETRIES} retries"
                         )
@@ -227,7 +233,7 @@ class AdaptiveExecutor:
                 "action":     "collect_state",
                 "params":     {"include_screenshot": False},
             })
-            result = await self.sm.wait_for_result(command_id, timeout=15.0)
+            result = await self.sm.wait_for_result(command_id, timeout=35.0)
             if result and result.get("structured_data"):
                 return result["structured_data"]
         except Exception as e:
@@ -330,7 +336,7 @@ class AdaptiveExecutor:
             }
             await self.sm.queue_command(command)
             result_data = await self.sm.wait_for_result(
-                command["command_id"], timeout=20.0
+                command["command_id"], timeout=45.0
             )
 
             duration = (time.time() - start) * 1000
@@ -414,7 +420,7 @@ class AdaptiveExecutor:
                 "params":     {},
             }
             await self.sm.queue_command(screenshot_cmd)
-            ss_result = await self.sm.wait_for_result(screenshot_cmd["command_id"], timeout=15.0)
+            ss_result = await self.sm.wait_for_result(screenshot_cmd["command_id"], timeout=25.0)
 
             if ss_result and ss_result.get("screenshot_b64"):
                 b64 = ss_result["screenshot_b64"]
@@ -438,10 +444,9 @@ class AdaptiveExecutor:
             error="All fallbacks exhausted",
         )
 
-    async def _handle_step_failure(self, result: StepResult, step: dict, ctx: ExecutionContext):
-        result.retries += 1
+    def _log_step_failure(self, result: StepResult, step: dict, attempt: int):
         logger.warning(
-            f"❌ Step '{result.action}' failed (attempt {result.retries}/{self.MAX_RETRIES}): "
+            f"❌ Step '{result.action}' failed (attempt {attempt}/{self.MAX_RETRIES}): "
             f"{result.error[:100]}"
         )
 
