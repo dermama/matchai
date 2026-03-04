@@ -408,6 +408,17 @@ class AgentService : Service() {
                     is String  -> put(k, v)
                     is Boolean -> put(k, v)
                     is Int     -> put(k, v)
+                    is Map<*, *> -> put(k, buildJsonObject {
+                        @Suppress("UNCHECKED_CAST")
+                        (v as Map<String, Any?>).forEach { (mk, mv) ->
+                            when (mv) {
+                                is String  -> put(mk, mv)
+                                is Boolean -> put(mk, mv)
+                                is Int     -> put(mk, mv)
+                                else       -> put(mk, mv.toString())
+                            }
+                        }
+                    })
                     is List<*> -> put(k, buildJsonArray { v.forEach { item ->
                         when (item) {
                             is String -> add(item)
